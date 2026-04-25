@@ -709,19 +709,42 @@ function QuickRequestForm({
   const [company, setCompany] = useState("");
   const [serviceType, setServiceType] = useState("");
   const [phone, setPhone] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   return (
     <form
       className="space-y-4"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
         const phonePattern = /^(01[0-9]-?\d{3,4}-?\d{4}|0\d{1,2}-?\d{3,4}-?\d{4})$/;
         if (!phonePattern.test(phone.trim())) {
           onInvalid("연락처 형식이 올바르지 않습니다. (예: 010-1234-5678)");
           return;
         }
-        console.log("[MVP quick request]", { company, serviceType, phone });
-        onDone();
+        setIsSubmitting(true);
+        try {
+          const res = await fetch("/api/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              kind: "request",
+              data: {
+                company,
+                serviceType,
+                phone,
+                source: "홈 빠른 의뢰 모달",
+              },
+            }),
+          });
+          if (!res.ok) {
+            console.error("[quick request] notify failed:", await res.text());
+          }
+        } catch (err) {
+          console.error("[quick request] notify error:", err);
+        } finally {
+          setIsSubmitting(false);
+          onDone();
+        }
       }}
     >
       <div>
@@ -781,9 +804,10 @@ function QuickRequestForm({
         </Link>
         <button
           type="submit"
-          className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800"
+          disabled={isSubmitting}
+          className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          빠른 접수
+          {isSubmitting ? "접수 중..." : "빠른 접수"}
         </button>
       </div>
     </form>
@@ -800,19 +824,42 @@ function QuickExpertForm({
   const [name, setName] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   return (
     <form
       className="space-y-4"
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault();
         const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailPattern.test(email.trim())) {
           onInvalid("이메일 형식이 올바르지 않습니다.");
           return;
         }
-        console.log("[MVP quick expert register]", { name, specialty, email });
-        onDone();
+        setIsSubmitting(true);
+        try {
+          const res = await fetch("/api/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              kind: "expert",
+              data: {
+                name,
+                specialties: [specialty],
+                email,
+                source: "홈 빠른 등록 모달",
+              },
+            }),
+          });
+          if (!res.ok) {
+            console.error("[quick expert] notify failed:", await res.text());
+          }
+        } catch (err) {
+          console.error("[quick expert] notify error:", err);
+        } finally {
+          setIsSubmitting(false);
+          onDone();
+        }
       }}
     >
       <div>
@@ -873,9 +920,10 @@ function QuickExpertForm({
         </Link>
         <button
           type="submit"
-          className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800"
+          disabled={isSubmitting}
+          className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          빠른 신청
+          {isSubmitting ? "신청 중..." : "빠른 신청"}
         </button>
       </div>
     </form>

@@ -158,6 +158,8 @@ const LABELS: Record<string, string> = {
   preferredServices: "선호 용역 유형",
   serviceArea: "담당 가능 지역",
   intro: "프로필 소개",
+  // 공통
+  source: "유입 경로",
 };
 
 function formatValue(value: unknown): string {
