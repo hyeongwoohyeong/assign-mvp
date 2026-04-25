@@ -365,7 +365,7 @@ export default function RequestPage() {
           <label htmlFor="confidential" className="text-sm text-navy-700">
             <span className="font-semibold text-navy-900">보안이 필요합니다</span>
             <span className="ml-1">
-              — 회사명을 비공개로 처리하고, 비밀유지 서약을 받은 전문가에 한해 매칭을 진행합니다.
+              — 회사명을 비공개로 처리하여 매칭을 진행합니다.
             </span>
           </label>
         </div>
