@@ -10,6 +10,7 @@ import type {
 // when the backend is in place.
 
 export const SERVICE_CATEGORIES: ServiceCategory[] = [
+  "회계감사",
   "세무기장",
   "세무신고",
   "회계자문",
@@ -18,9 +19,11 @@ export const SERVICE_CATEGORIES: ServiceCategory[] = [
   "M&A 자문",
   "경영/재무 컨설팅",
   "법률자문",
+  "기타",
 ];
 
 export const SERVICE_CATEGORY_DESCRIPTIONS: Record<ServiceCategory, string> = {
+  "회계감사": "외부감사 대상 법인의 재무제표 감사, 내부회계관리제도 검토 등 감사 업무를 수행합니다.",
   "세무기장": "월별 장부 작성과 회계처리, 부가세 신고 기초 자료를 정확하게 관리합니다.",
   "세무신고": "법인세, 부가세, 원천세 등 정기 신고 및 가산세 리스크를 점검합니다.",
   "회계자문": "결산, 내부통제, 회계기준 적용 등 실무 회계 이슈에 대한 자문을 제공합니다.",
@@ -29,6 +32,7 @@ export const SERVICE_CATEGORY_DESCRIPTIONS: Record<ServiceCategory, string> = {
   "M&A 자문": "거래 구조 설계부터 협상, 클로징까지 거래 전반을 지원합니다.",
   "경영/재무 컨설팅": "성장 전략, 자본 구조, KPI 설계 등 경영 의사결정을 지원합니다.",
   "법률자문": "계약, 기업 거버넌스, 분쟁 등 기업 법무 전반을 자문합니다.",
+  "기타": "위 분류에 해당하지 않는 전문서비스도 의뢰하실 수 있습니다. 상세 내용을 함께 적어주세요.",
 };
 
 export const MOCK_EXPERTS: Expert[] = [

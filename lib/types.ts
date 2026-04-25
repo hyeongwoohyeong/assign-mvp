@@ -3,6 +3,7 @@
 // these types should match the schema of your database tables/collections.
 
 export type ServiceCategory =
+  | "회계감사"
   | "세무기장"
   | "세무신고"
   | "회계자문"
@@ -10,7 +11,8 @@ export type ServiceCategory =
   | "재무실사"
   | "M&A 자문"
   | "경영/재무 컨설팅"
-  | "법률자문";
+  | "법률자문"
+  | "기타";
 
 export type BudgetRange =
   | "300만원 이하"
