@@ -67,17 +67,48 @@ npm run build
 npm run start
 ```
 
-## 백엔드 연동 가이드
+## 폼 제출 알림 메일 설정 (Resend)
 
-이 MVP는 의도적으로 백엔드 없이 동작하도록 만들어졌습니다. Supabase / Firebase /
-자체 API를 붙일 때는 다음 지점만 변경하면 됩니다.
+용역 의뢰 / 전문가 등록 폼이 제출되면 운영자 이메일로 알림이 발송됩니다.
+구현체는 `app/api/notify/route.ts` 의 serverless API 라우트입니다.
 
-- `app/request/page.tsx` 의 `handleSubmit` — 의뢰 폼을 POST 하는 위치
-- `app/expert-register/page.tsx` 의 `handleSubmit` — 전문가 신청을 POST 하는 위치
+### 1) Resend 가입 및 API 키 발급
+
+1. https://resend.com 가입 (알림 받을 메일 주소로 가입 권장)
+2. 좌측 메뉴 → **API Keys** → **Create API Key** → 키 복사 (`re_xxx...`)
+3. 자체 도메인이 없으면 발신 주소는 기본값 `onboarding@resend.dev` 그대로 사용
+   - 단, 이 발신 주소는 Resend에 가입한 본인 이메일로만 발송 가능 (테스트용)
+   - 프로덕션에서 외부에 보낼 때는 도메인 검증이 필요
+
+### 2) 환경변수 등록
+
+**Vercel** (배포 환경):
+Project → Settings → Environment Variables 에 다음 항목 추가:
+
+| Name | Value |
+| --- | --- |
+| `RESEND_API_KEY` | 발급받은 키 (`re_...`) |
+| `NOTIFY_TO_EMAIL` | 알림 받을 이메일 (예: `guddn8663@naver.com`) |
+| `NOTIFY_FROM_EMAIL` | (선택) `Assign Notification <onboarding@resend.dev>` |
+
+등록 후 **Deployments** 탭에서 최신 배포를 **Redeploy** 해야 변경된 env 가 적용됩니다.
+
+**로컬** (`npm run dev`):
+프로젝트 루트에 `.env.local` 파일을 만들고 위 변수들을 채웁니다 (`.env.example` 참고).
+
+### 3) 동작 확인
+
+1. 폼 제출 → 등록한 메일함에 `[Assign] 신규 용역 의뢰 ...` 메일 도착
+2. 메일에 회사명, 담당자, 연락처, 프로젝트 설명 등이 표 형태로 정리되어 옴
+3. 키가 없으면 메일은 발송되지 않고 서버 로그에만 기록됨 (폼은 정상 동작)
+
+## 추후 백엔드 연동 가이드
+
+알림 메일을 넘어 데이터를 영구 저장하려면:
+
+- `app/api/notify/route.ts` 에 DB insert 로직 추가 (Supabase / Firestore 등)
 - `lib/mockData.ts` — 디렉터리/대시보드의 데이터 소스를 DB 쿼리로 교체
-- 인증/권한: 현재는 인증이 없으므로 `/admin` 보호용 미들웨어를 추가하세요.
-
-각 진입점에는 `// NOTE: Backend integration point.` 주석으로 위치를 표기해두었습니다.
+- 인증/권한: `/admin` 보호용 미들웨어 추가
 
 ## 제품 메시지 (외부 공유용)
 
@@ -96,5 +127,5 @@ npm run start
 
 - 실제 인증 없음
 - 결제 없음
-- 영구 저장소 없음 (폼 제출 시 콘솔 로그 후 성공 화면 표시)
-- `/admin`은 누구나 접근 가능 (운영 단계 진입 시 보호 필요)
+- 영구 저장소 없음 (폼 제출 시 운영자에게 알림 메일만 발송)
+- `/admin`은 mock 데이터 표시 + 누구나 접근 가능 (운영 단계 진입 시 보호 필요)

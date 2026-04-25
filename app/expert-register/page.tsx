@@ -121,10 +121,19 @@ export default function ExpertRegisterPage() {
     if (Object.keys(nextErrors).length > 0) return;
 
     setIsSubmitting(true);
-    // NOTE: Backend integration point.
-    // Send `form` to the API (e.g. POST /api/experts, Supabase insert, etc.).
-    console.log("[MVP mock] expert registration submitted:", form);
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // 운영자 알림 메일 발송 — /api/notify 로 전문가 등록 데이터 전송.
+    try {
+      const res = await fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "expert", data: form }),
+      });
+      if (!res.ok) {
+        console.error("[expert] notify failed:", await res.text());
+      }
+    } catch (err) {
+      console.error("[expert] notify error:", err);
+    }
     setIsSubmitting(false);
     setSubmitted(true);
   }

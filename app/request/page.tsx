@@ -101,11 +101,21 @@ export default function RequestPage() {
     if (Object.keys(nextErrors).length > 0) return;
 
     setIsSubmitting(true);
-    // NOTE: Backend integration point.
-    // Send `form` to the API (e.g. POST /api/requests, Supabase insert, etc.).
-    // For MVP we simply switch to a success state.
-    console.log("[MVP mock] client request submitted:", form);
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // 운영자에게 알림 메일을 보내기 위해 /api/notify 로 폼 데이터를 전송한다.
+    // 메일 전송이 실패해도 사용자에겐 정상 접수로 안내하고,
+    // 콘솔 / 서버 로그로 추적할 수 있도록 한다.
+    try {
+      const res = await fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "request", data: form }),
+      });
+      if (!res.ok) {
+        console.error("[request] notify failed:", await res.text());
+      }
+    } catch (err) {
+      console.error("[request] notify error:", err);
+    }
     setIsSubmitting(false);
     setSubmitted(true);
   }
