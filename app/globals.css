@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/PretendardVariable.woff2")
+    format("woff2-variations");
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f1729;
+}
+
+html,
+body {
+  background-color: #f7f9fc;
+  color: var(--foreground);
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI",
+    Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Subtle utilities */
+.section-container {
+  @apply mx-auto max-w-6xl px-6 lg:px-8;
+}
+
+.input-base {
+  @apply w-full rounded-lg border border-navy-200 bg-white px-4 py-3 text-sm text-navy-900
+    placeholder:text-navy-400 focus:border-navy-500 focus:outline-none focus:ring-2
+    focus:ring-navy-500/20;
+}
+
+.label-base {
+  @apply mb-1.5 block text-sm font-medium text-navy-800;
+}
