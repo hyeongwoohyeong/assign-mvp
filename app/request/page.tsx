@@ -13,6 +13,16 @@ const BUDGET_RANGES: BudgetRange[] = [
   "3,000만원 이상",
 ];
 
+// 희망 착수 시점은 자유 입력 대신 4개의 표준화된 옵션으로 받는다.
+// 운영자가 의뢰 정리할 때 정규화 부담을 줄이고, 매칭 시 일정 우선순위를 빠르게 판단할 수 있다.
+const START_DATE_OPTIONS = ["1주 내", "1개월 내", "1~3개월", "협의 가능"] as const;
+type StartDateOption = (typeof START_DATE_OPTIONS)[number] | "";
+
+// 의뢰번호 — 클라이언트 측에서 제출 시 발급. DB 없이도 사용자/운영자가 같은 의뢰를 참조할 수 있게 한다.
+function generateRequestId() {
+  return `REQ-${Date.now().toString(36).toUpperCase().slice(-6)}`;
+}
+
 interface RequestFormState {
   company: string;
   contactName: string;
@@ -21,7 +31,7 @@ interface RequestFormState {
   serviceType: ServiceCategory | "";
   location: string;
   budget: BudgetRange | "";
-  startDate: string;
+  startDate: StartDateOption;
   description: string;
   confidential: boolean;
 }
@@ -55,8 +65,11 @@ const INITIAL_STATE: RequestFormState = {
 export default function RequestPage() {
   const [form, setForm] = useState<RequestFormState>(INITIAL_STATE);
   const [submitted, setSubmitted] = useState(false);
+  const [submittedId, setSubmittedId] = useState<string | null>(null);
   const [errors, setErrors] = useState<RequestFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // honeypot — 사람 눈에는 안 보이는 필드. 봇은 이 칸을 채우는 경향이 있어 값이 있으면 무시 처리.
+  const [hp, setHp] = useState("");
 
   function update<K extends keyof RequestFormState>(
     key: K,
@@ -82,7 +95,7 @@ export default function RequestPage() {
     if (!next.serviceType) nextErrors.serviceType = "서비스 유형을 선택해주세요.";
     if (!next.location.trim()) nextErrors.location = "회사 소재지를 입력해주세요.";
     if (!next.budget) nextErrors.budget = "예산 범위를 선택해주세요.";
-    if (!next.startDate.trim()) nextErrors.startDate = "희망 착수 시점을 입력해주세요.";
+    if (!next.startDate) nextErrors.startDate = "희망 착수 시점을 선택해주세요.";
     if (!next.description.trim()) {
       nextErrors.description = "프로젝트 설명을 입력해주세요.";
     } else if (next.description.trim().length < 20) {
@@ -101,6 +114,9 @@ export default function RequestPage() {
     if (Object.keys(nextErrors).length > 0) return;
 
     setIsSubmitting(true);
+    const requestId = generateRequestId();
+    setSubmittedId(requestId);
+
     // 운영자에게 알림 메일을 보내기 위해 /api/notify 로 폼 데이터를 전송한다.
     // 메일 전송이 실패해도 사용자에겐 정상 접수로 안내하고,
     // 콘솔 / 서버 로그로 추적할 수 있도록 한다.
@@ -108,7 +124,11 @@ export default function RequestPage() {
       const res = await fetch("/api/notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "request", data: form }),
+        body: JSON.stringify({
+          kind: "request",
+          // hp 가 채워져 있으면 서버에서 메일 발송을 건너뛴다.
+          data: { ...form, requestId, _hp: hp },
+        }),
       });
       if (!res.ok) {
         console.error("[request] notify failed:", await res.text());
@@ -141,10 +161,22 @@ export default function RequestPage() {
           <h1 className="mt-6 text-2xl font-bold text-navy-900">
             의뢰가 정상적으로 접수되었습니다
           </h1>
-          <p className="mt-4 text-sm leading-relaxed text-navy-600">
-            Assign 검증팀이 의뢰 내용을 확인한 뒤,
+          {submittedId && (
+            <div className="mx-auto mt-5 inline-flex items-center gap-2 rounded-full border border-navy-200 bg-[#f7f9fc] px-4 py-1.5">
+              <span className="text-xs font-medium text-navy-500">의뢰번호</span>
+              <span className="text-sm font-bold tracking-wider text-navy-900">
+                {submittedId}
+              </span>
+            </div>
+          )}
+          <p className="mt-5 text-sm leading-relaxed text-navy-600">
+            Assign 운영팀이 의뢰 내용을 직접 검토한 뒤,
             <br />
             영업일 기준 1~2일 내에 적합한 전문가들을 매칭하여 연락드리겠습니다.
+          </p>
+          <p className="mt-3 text-xs text-navy-500">
+            의뢰 관련 문의는 <strong>guddn8663@naver.com</strong> 또는 접수 안내
+            메일에 회신해주시면 같은 의뢰로 연결됩니다.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
@@ -308,23 +340,41 @@ export default function RequestPage() {
                 </option>
               ))}
             </select>
+            <p className="mt-1 text-xs text-navy-500">
+              정확하지 않아도 됩니다. 협의 가능합니다.
+            </p>
             {errors.budget && (
               <p className="mt-1 text-xs text-red-600">{errors.budget}</p>
             )}
           </div>
           <div>
-            <label className="label-base" htmlFor="startDate">
+            <label className="label-base">
               희망 착수 시점 <span className="text-red-500">*</span>
             </label>
-            <input
-              id="startDate"
-              required
-              type="text"
-              className="input-base"
-              placeholder="예) 2026년 5월 또는 즉시"
-              value={form.startDate}
-              onChange={(e) => update("startDate", e.target.value)}
-            />
+            <div className="grid grid-cols-2 gap-2">
+              {START_DATE_OPTIONS.map((opt) => {
+                const checked = form.startDate === opt;
+                return (
+                  <label
+                    key={opt}
+                    className={`flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2.5 text-sm transition ${
+                      checked
+                        ? "border-navy-900 bg-navy-900 text-white"
+                        : "border-navy-200 bg-white text-navy-800 hover:border-navy-400"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="startDate"
+                      className="sr-only"
+                      checked={checked}
+                      onChange={() => update("startDate", opt)}
+                    />
+                    <span className="font-medium">{opt}</span>
+                  </label>
+                );
+              })}
+            </div>
             {errors.startDate && (
               <p className="mt-1 text-xs text-red-600">{errors.startDate}</p>
             )}
@@ -365,9 +415,27 @@ export default function RequestPage() {
           <label htmlFor="confidential" className="text-sm text-navy-700">
             <span className="font-semibold text-navy-900">보안이 필요합니다</span>
             <span className="ml-1">
-              — 회사명을 비공개로 처리하여 매칭을 진행합니다.
+              — 회사명, 담당자명, 회사 이메일 도메인을 가린 익명 요약본 형태로
+              전문가에게 전달합니다.
             </span>
           </label>
+        </div>
+
+        {/* honeypot — 사람 눈에는 안 보이는 필드. 봇이 자동 채움하면 서버에서 무시 처리. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-[9999px] top-0 h-0 w-0 overflow-hidden opacity-0"
+        >
+          <label htmlFor="_hp">이 항목은 비워두세요</label>
+          <input
+            id="_hp"
+            type="text"
+            name="_hp"
+            tabIndex={-1}
+            autoComplete="off"
+            value={hp}
+            onChange={(e) => setHp(e.target.value)}
+          />
         </div>
 
         <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">

@@ -39,6 +39,18 @@ export async function POST(req: Request) {
     );
   }
 
+  // honeypot 필터 — 폼에는 사람 눈에 안 보이는 _hp 필드가 있고,
+  // 봇이 자동 채움하면 값이 들어온다. 값이 있으면 "정상 응답"하면서 메일은 안 보낸다.
+  const hp = payload.data?._hp;
+  if (typeof hp === "string" && hp.trim().length > 0) {
+    console.warn("[notify] honeypot tripped, skipping mail. _hp =", hp);
+    return NextResponse.json({ ok: true, delivered: false, skipped: "honeypot" });
+  }
+  // 메일 본문에 _hp 가 노출되지 않도록 제거.
+  if (payload.data && "_hp" in payload.data) {
+    delete payload.data._hp;
+  }
+
   const subject = buildSubject(payload);
   const html = buildHtml(payload);
   const text = buildText(payload);
@@ -89,13 +101,17 @@ export async function POST(req: Request) {
 
 function buildSubject(p: NotifyPayload): string {
   if (p.kind === "request") {
+    const id = (p.data.requestId as string) || "";
     const company = (p.data.company as string) || "(회사명 미입력)";
     const service = (p.data.serviceType as string) || "";
-    return `[Assign] 신규 용역 의뢰 — ${company}${service ? ` / ${service}` : ""}`;
+    const idPrefix = id ? `[${id}] ` : "";
+    return `${idPrefix}[Assign] 신규 용역 의뢰 — ${company}${service ? ` / ${service}` : ""}`;
   }
+  const id = (p.data.expertId as string) || "";
   const name = (p.data.name as string) || "(이름 미입력)";
   const firm = (p.data.firm as string) || "";
-  return `[Assign] 신규 전문가 등록 — ${name}${firm ? ` / ${firm}` : ""}`;
+  const idPrefix = id ? `[${id}] ` : "";
+  return `${idPrefix}[Assign] 신규 전문가 등록 — ${name}${firm ? ` / ${firm}` : ""}`;
 }
 
 function buildHtml(p: NotifyPayload): string {
@@ -138,6 +154,9 @@ function buildText(p: NotifyPayload): string {
 }
 
 const LABELS: Record<string, string> = {
+  // 식별자
+  requestId: "의뢰번호",
+  expertId: "등록번호",
   // request form
   company: "회사명",
   contactName: "담당자명",
@@ -157,6 +176,7 @@ const LABELS: Record<string, string> = {
   experience: "주요 수행 경험",
   preferredServices: "선호 용역 유형",
   serviceArea: "담당 가능 지역",
+  feeRange: "평균 보수 범위",
   intro: "프로필 소개",
   // 공통
   source: "유입 경로",

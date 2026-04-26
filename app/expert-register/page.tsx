@@ -6,6 +6,22 @@ import SectionTitle from "@/components/SectionTitle";
 import { SERVICE_CATEGORIES } from "@/lib/mockData";
 import type { ServiceCategory } from "@/lib/types";
 
+// 전문가 본인이 부르는 보수 범위. 의뢰의 예산 범위(BUDGET_RANGES)와 같은 단위로 둬서
+// 운영자 매칭 시 가격대를 한눈에 비교할 수 있게 한다.
+const FEE_RANGES = [
+  "300만원 이하",
+  "300만원~1,000만원",
+  "1,000만원~3,000만원",
+  "3,000만원 이상",
+  "협의",
+] as const;
+type FeeRange = (typeof FEE_RANGES)[number] | "";
+
+// 전문가 등록 번호 — 클라이언트 측 발급. 사용자/운영자 모두 동일 등록 건을 참조 가능.
+function generateExpertId() {
+  return `EXP-${Date.now().toString(36).toUpperCase().slice(-6)}`;
+}
+
 interface ExpertFormState {
   name: string;
   firm: string;
@@ -16,6 +32,7 @@ interface ExpertFormState {
   experience: string;
   preferredServices: string;
   serviceArea: string;
+  feeRange: FeeRange;
   intro: string;
 }
 
@@ -29,6 +46,7 @@ type ExpertField =
   | "experience"
   | "preferredServices"
   | "serviceArea"
+  | "feeRange"
   | "intro";
 
 type ExpertFormErrors = Partial<Record<ExpertField, string>>;
@@ -43,14 +61,18 @@ const INITIAL_STATE: ExpertFormState = {
   experience: "",
   preferredServices: "",
   serviceArea: "",
+  feeRange: "",
   intro: "",
 };
 
 export default function ExpertRegisterPage() {
   const [form, setForm] = useState<ExpertFormState>(INITIAL_STATE);
   const [submitted, setSubmitted] = useState(false);
+  const [submittedId, setSubmittedId] = useState<string | null>(null);
   const [errors, setErrors] = useState<ExpertFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // honeypot — 사람 눈에는 안 보이는 필드. 봇이 채우면 서버에서 무시 처리.
+  const [hp, setHp] = useState("");
 
   function update<K extends keyof ExpertFormState>(
     key: K,
@@ -98,6 +120,9 @@ export default function ExpertRegisterPage() {
     if (!next.serviceArea.trim()) {
       nextErrors.serviceArea = "담당 가능 지역을 입력해주세요.";
     }
+    if (!next.feeRange) {
+      nextErrors.feeRange = "평균 보수 범위를 선택해주세요.";
+    }
     if (!next.experience.trim()) {
       nextErrors.experience = "주요 수행 경험을 입력해주세요.";
     } else if (next.experience.trim().length < 20) {
@@ -121,12 +146,18 @@ export default function ExpertRegisterPage() {
     if (Object.keys(nextErrors).length > 0) return;
 
     setIsSubmitting(true);
+    const expertId = generateExpertId();
+    setSubmittedId(expertId);
+
     // 운영자 알림 메일 발송 — /api/notify 로 전문가 등록 데이터 전송.
     try {
       const res = await fetch("/api/notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "expert", data: form }),
+        body: JSON.stringify({
+          kind: "expert",
+          data: { ...form, expertId, _hp: hp },
+        }),
       });
       if (!res.ok) {
         console.error("[expert] notify failed:", await res.text());
@@ -159,10 +190,22 @@ export default function ExpertRegisterPage() {
           <h1 className="mt-6 text-2xl font-bold text-navy-900">
             전문가 등록 신청이 접수되었습니다
           </h1>
-          <p className="mt-4 text-sm leading-relaxed text-navy-600">
-            Assign 검증팀이 자격과 경력을 확인한 뒤,
+          {submittedId && (
+            <div className="mx-auto mt-5 inline-flex items-center gap-2 rounded-full border border-navy-200 bg-[#f7f9fc] px-4 py-1.5">
+              <span className="text-xs font-medium text-navy-500">등록번호</span>
+              <span className="text-sm font-bold tracking-wider text-navy-900">
+                {submittedId}
+              </span>
+            </div>
+          )}
+          <p className="mt-5 text-sm leading-relaxed text-navy-600">
+            Assign 운영팀이 자격과 경력을 직접 확인한 뒤,
             <br />
             영업일 기준 2~3일 내에 등록 결과를 안내드리겠습니다.
+          </p>
+          <p className="mt-3 text-xs text-navy-500">
+            승인 시 등록 메일로 활동 안내가 발송되며, 매칭되는 의뢰가 있을 때마다
+            같은 메일로 연락드립니다.
           </p>
           <div className="mt-8">
             <Link
@@ -261,6 +304,10 @@ export default function ExpertRegisterPage() {
               (복수 선택 가능)
             </span>
           </label>
+          <p className="mb-2 text-xs text-navy-500">
+            실제 수임 가능한 분야만 선택해주세요. 너무 많이 선택하면 매칭 우선순위에서
+            밀릴 수 있습니다.
+          </p>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {SERVICE_CATEGORIES.map((cat) => {
               const checked = form.specialties.includes(cat);
@@ -339,6 +386,43 @@ export default function ExpertRegisterPage() {
               <p className="mt-1 text-xs text-red-600">{errors.serviceArea}</p>
             )}
           </div>
+
+          <div className="sm:col-span-2">
+            <label className="label-base">
+              평균 보수 범위 <span className="text-red-500">*</span>
+            </label>
+            <p className="mb-2 text-xs text-navy-500">
+              건당 평균 보수입니다. 의뢰 예산과 맞춰 매칭 정확도를 높이기 위한 정보로,
+              실제 보수는 건별 협의로 결정됩니다.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
+              {FEE_RANGES.map((opt) => {
+                const checked = form.feeRange === opt;
+                return (
+                  <label
+                    key={opt}
+                    className={`flex cursor-pointer items-center justify-center rounded-lg border px-3 py-2.5 text-sm transition ${
+                      checked
+                        ? "border-navy-900 bg-navy-900 text-white"
+                        : "border-navy-200 bg-white text-navy-800 hover:border-navy-400"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="feeRange"
+                      className="sr-only"
+                      checked={checked}
+                      onChange={() => update("feeRange", opt)}
+                    />
+                    <span className="font-medium">{opt}</span>
+                  </label>
+                );
+              })}
+            </div>
+            {errors.feeRange && (
+              <p className="mt-1 text-xs text-red-600">{errors.feeRange}</p>
+            )}
+          </div>
         </div>
 
         <div>
@@ -385,6 +469,23 @@ export default function ExpertRegisterPage() {
             )}
             <p className="text-xs text-navy-400">{form.intro.length}자</p>
           </div>
+        </div>
+
+        {/* honeypot — 사람 눈에는 안 보이는 필드. 봇 자동 채움 방어용. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-[9999px] top-0 h-0 w-0 overflow-hidden opacity-0"
+        >
+          <label htmlFor="_hp">이 항목은 비워두세요</label>
+          <input
+            id="_hp"
+            type="text"
+            name="_hp"
+            tabIndex={-1}
+            autoComplete="off"
+            value={hp}
+            onChange={(e) => setHp(e.target.value)}
+          />
         </div>
 
         <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:justify-end">

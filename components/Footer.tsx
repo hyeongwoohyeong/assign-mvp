@@ -44,8 +44,13 @@ export default function Footer() {
             <h4 className="text-sm font-semibold text-navy-900">회사</h4>
             <ul className="mt-3 space-y-2 text-sm text-navy-600">
               <li>
+                <Link href="/about" className="hover:text-navy-900">
+                  Assign 소개
+                </Link>
+              </li>
+              <li>
                 <Link href="/#service" className="hover:text-navy-900">
-                  서비스 소개
+                  매칭 방식
                 </Link>
               </li>
               <li>
@@ -54,9 +59,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="#" className="hover:text-navy-900">
+                <a
+                  href="mailto:guddn8663@naver.com"
+                  className="hover:text-navy-900"
+                >
                   문의하기
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -78,8 +86,17 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-navy-100 pt-6 text-xs text-navy-400">
-          © {new Date().getFullYear()} Assign. All rights reserved.
+        <div className="mt-10 flex flex-col gap-2 border-t border-navy-100 pt-6 text-xs text-navy-400 sm:flex-row sm:items-center sm:justify-between">
+          <span>© {new Date().getFullYear()} Assign. All rights reserved.</span>
+          <span>
+            운영 문의:{" "}
+            <a
+              href="mailto:guddn8663@naver.com"
+              className="text-navy-500 hover:text-navy-800"
+            >
+              guddn8663@naver.com
+            </a>
+          </span>
         </div>
       </div>
     </footer>
