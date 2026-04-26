@@ -69,6 +69,13 @@ const QUICK_START = [
     cta: "의뢰 등록하기",
   },
   {
+    title: "공개된 의뢰 둘러보기",
+    description:
+      "현재 게시판에 공개된 의뢰를 확인하고, 본인 전문분야와 맞는 의뢰에 자율적으로 제안할 수 있습니다.",
+    href: "/board",
+    cta: "의뢰 게시판 보기",
+  },
+  {
     title: "전문가로 참여하기",
     description:
       "프로필과 수행 경험을 등록해 디렉토리에 노출하고, 관심 있는 의뢰에 직접 제안하세요.",
@@ -119,6 +126,10 @@ const FAQ_ITEMS = [
     q: "Assign이 계약을 중개하나요?",
     a: "Assign은 의뢰 등록·전문가 디렉토리·제안 수신 등 정보 게시 기능만 제공합니다. 계약 여부와 조건은 의뢰자와 전문가가 직접 결정하시며, 플랫폼은 계약 당사자가 아닙니다.",
   },
+  {
+    q: "연락처는 언제 공유되나요?",
+    a: "이메일·전화 등 연락처는 양 당사자가 명시적으로 동의한 경우에만 공유됩니다. 의뢰자가 도착한 제안에 대해 \"연락 허용\"을 누르거나, 디렉토리에서 보낸 \"연락 요청\"을 전문가가 \"수락\"한 경우에만 공유되며, 그 전에는 어떠한 연락처도 노출되지 않습니다.",
+  },
 ];
 
 export default function HomePage() {
@@ -146,13 +157,12 @@ export default function HomePage() {
             <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-navy-900 sm:text-5xl lg:text-6xl">
               기업이 필요한 전문서비스를 등록하고,
               <br />
-              전문가의 제안을 받아보세요.
+              전문가의 제안을 받아 직접 선택하세요.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-navy-600">
-              Assign은 회계, 세무, 재무, 컨설팅 등 전문서비스를 필요로 하는 기업과
-              전문가가 직접 만나는 의뢰·디렉토리 플랫폼입니다. Assign은 특정
-              전문가를 추천하거나 계약을 중개하지 않으며, 정보 게시 및 확인 기능만
-              제공합니다.
+              Assign은 전문가 정보를 제공하고, 의뢰를 공개하여 전문가가 직접 제안할 수
+              있는 플랫폼입니다. Assign은 특정 전문가를 추천하거나 계약을 중개하지
+              않습니다.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button href="/request" size="lg">
@@ -203,7 +213,7 @@ export default function HomePage() {
             title="홈에서 바로 시작할 수 있습니다"
             description="목적에 맞는 경로를 선택하면 바로 다음 단계로 이동합니다."
           />
-          <div className="mt-10 grid gap-4 md:grid-cols-3">
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {QUICK_START.map((item) => (
               <div
                 key={item.title}

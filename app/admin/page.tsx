@@ -3,6 +3,8 @@ import {
   ADMIN_SUMMARY,
   MOCK_RECENT_REQUESTS,
   MOCK_RECENT_EXPERT_REGISTRATIONS,
+  MOCK_PROPOSALS,
+  MOCK_CONTACT_REQUESTS,
 } from "@/lib/mockData";
 
 export default function AdminPage() {
@@ -206,6 +208,115 @@ export default function AdminPage() {
           </table>
         </div>
       </div>
+
+      {/*
+        제안 현황 — 전문가 → 의뢰 방향의 자율 제안 흐름을 모니터링.
+        COMPLIANCE: 운영자가 제안을 강제하거나 추천하지 않는다는 점을 분명히 한다.
+      */}
+      <div className="mt-8 rounded-xl border border-navy-100 bg-white shadow-soft">
+        <div className="flex items-center justify-between border-b border-navy-100 px-6 py-4">
+          <div>
+            <h3 className="text-base font-semibold text-navy-900">
+              최근 도착한 제안 (전문가 → 의뢰)
+            </h3>
+            <p className="mt-0.5 text-xs text-navy-500">
+              전문가 본인이 자율 판단으로 보낸 제안 목록입니다. 운영자는 제안 자체에
+              관여하지 않습니다.
+            </p>
+          </div>
+          <span className="text-xs font-medium text-navy-400">Mock</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-[#f7f9fc] text-left text-xs font-semibold uppercase tracking-wider text-navy-500">
+              <tr>
+                <th className="px-6 py-3">전문가</th>
+                <th className="px-6 py-3">의뢰</th>
+                <th className="px-6 py-3">연락 요청 동봉</th>
+                <th className="px-6 py-3">상태</th>
+                <th className="px-6 py-3">전송일</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-navy-100">
+              {MOCK_PROPOSALS.map((p) => (
+                <tr key={p.id} className="text-navy-800">
+                  <td className="whitespace-nowrap px-6 py-4 font-medium">
+                    {p.expertName}
+                    <span className="block text-xs font-normal text-navy-500">
+                      {p.expertFirm}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-navy-600">
+                    {p.requestId}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-navy-600">
+                    {p.requestedContact ? "예" : "아니오"}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <ProposalStatus status={p.status} />
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-navy-500">
+                    {p.sentAt}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/*
+        연락 승인 현황 — 의뢰자 → 전문가 방향의 연락 요청 + 전문가 수락/거절 흐름.
+        COMPLIANCE: 연락처 자체는 표시하지 않는다. 상태(대기/수락/거절)만 표시한다.
+      */}
+      <div className="mt-8 rounded-xl border border-navy-100 bg-white shadow-soft">
+        <div className="flex items-center justify-between border-b border-navy-100 px-6 py-4">
+          <div>
+            <h3 className="text-base font-semibold text-navy-900">
+              연락 승인 현황 (의뢰자 → 전문가)
+            </h3>
+            <p className="mt-0.5 text-xs text-navy-500">
+              연락처는 양 당사자가 동의한 경우에만 공유됩니다. 본 표에는 연락처를
+              표시하지 않습니다.
+            </p>
+          </div>
+          <span className="text-xs font-medium text-navy-400">Mock</span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-[#f7f9fc] text-left text-xs font-semibold uppercase tracking-wider text-navy-500">
+              <tr>
+                <th className="px-6 py-3">의뢰자</th>
+                <th className="px-6 py-3">전문가</th>
+                <th className="px-6 py-3">요청 메시지</th>
+                <th className="px-6 py-3">상태</th>
+                <th className="px-6 py-3">요청일</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-navy-100">
+              {MOCK_CONTACT_REQUESTS.map((c) => (
+                <tr key={c.id} className="text-navy-800">
+                  <td className="whitespace-nowrap px-6 py-4 font-medium">
+                    {c.clientCompany}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-navy-600">
+                    {c.expertName}
+                  </td>
+                  <td className="max-w-xs truncate px-6 py-4 text-navy-600" title={c.clientContext}>
+                    {c.clientContext}
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4">
+                    <ContactStatus status={c.status} />
+                  </td>
+                  <td className="whitespace-nowrap px-6 py-4 text-navy-500">
+                    {c.requestedAt}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
@@ -234,6 +345,40 @@ function ExpertStatus({ status }: { status: string }) {
     승인: "bg-emerald-50 text-emerald-700 ring-emerald-200",
     검토중: "bg-amber-50 text-amber-700 ring-amber-200",
     보류: "bg-rose-50 text-rose-700 ring-rose-200",
+  };
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
+        styles[status] ?? "bg-navy-50 text-navy-700 ring-navy-200"
+      }`}
+    >
+      {status}
+    </span>
+  );
+}
+
+function ProposalStatus({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    제안전달: "bg-blue-50 text-blue-700 ring-blue-200",
+    연락허용: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    종료: "bg-navy-50 text-navy-500 ring-navy-200",
+  };
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${
+        styles[status] ?? "bg-navy-50 text-navy-700 ring-navy-200"
+      }`}
+    >
+      {status}
+    </span>
+  );
+}
+
+function ContactStatus({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    요청대기: "bg-amber-50 text-amber-700 ring-amber-200",
+    수락: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    거절: "bg-rose-50 text-rose-700 ring-rose-200",
   };
   return (
     <span

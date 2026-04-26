@@ -28,6 +28,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/board" className="hover:text-navy-900">
+                  의뢰 게시판
+                </Link>
+              </li>
+              <li>
                 <Link href="/experts" className="hover:text-navy-900">
                   전문가 디렉토리
                 </Link>
