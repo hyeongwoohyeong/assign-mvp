@@ -89,10 +89,10 @@ export default function AboutPage() {
               </dt>
               <dd className="mt-1">
                 <a
-                  href="mailto:guddn8663@naver.com"
+                  href="mailto:contact@getassign.kr"
                   className="text-navy-900 underline-offset-4 hover:underline"
                 >
-                  guddn8663@naver.com
+                  contact@getassign.kr
                 </a>
               </dd>
             </div>

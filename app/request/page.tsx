@@ -175,7 +175,7 @@ export default function RequestPage() {
             영업일 기준 1~2일 내에 적합한 전문가들을 매칭하여 연락드리겠습니다.
           </p>
           <p className="mt-3 text-xs text-navy-500">
-            의뢰 관련 문의는 <strong>guddn8663@naver.com</strong> 또는 접수 안내
+            의뢰 관련 문의는 <strong>contact@getassign.kr</strong> 또는 접수 안내
             메일에 회신해주시면 같은 의뢰로 연결됩니다.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">

@@ -60,7 +60,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:guddn8663@naver.com"
+                  href="mailto:contact@getassign.kr"
                   className="hover:text-navy-900"
                 >
                   문의하기
@@ -91,10 +91,10 @@ export default function Footer() {
           <span>
             운영 문의:{" "}
             <a
-              href="mailto:guddn8663@naver.com"
+              href="mailto:contact@getassign.kr"
               className="text-navy-500 hover:text-navy-800"
             >
-              guddn8663@naver.com
+              contact@getassign.kr
             </a>
           </span>
         </div>
