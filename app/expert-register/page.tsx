@@ -7,7 +7,7 @@ import { SERVICE_CATEGORIES } from "@/lib/mockData";
 import type { ServiceCategory } from "@/lib/types";
 
 // 전문가 본인이 부르는 보수 범위. 의뢰의 예산 범위(BUDGET_RANGES)와 같은 단위로 둬서
-// 운영자 매칭 시 가격대를 한눈에 비교할 수 있게 한다.
+// 의뢰자가 가격대를 한눈에 비교하고 직접 판단할 수 있게 한다.
 const FEE_RANGES = [
   "300만원 이하",
   "300만원~1,000만원",
@@ -199,13 +199,14 @@ export default function ExpertRegisterPage() {
             </div>
           )}
           <p className="mt-5 text-sm leading-relaxed text-navy-600">
-            Assign 운영팀이 자격과 경력을 직접 확인한 뒤,
+            등록하신 정보가 디렉토리 게시 기준에 부합하는지 확인 후,
             <br />
             영업일 기준 2~3일 내에 등록 결과를 안내드리겠습니다.
           </p>
           <p className="mt-3 text-xs text-navy-500">
-            승인 시 등록 메일로 활동 안내가 발송되며, 매칭되는 의뢰가 있을 때마다
-            같은 메일로 연락드립니다.
+            게시 완료 시 등록 메일로 안내드리며, 등록된 의뢰 중 전문분야에
+            부합하는 건이 있을 때 같은 메일로 안내됩니다. 의뢰 검토와 제안 여부는
+            전문가께서 직접 결정하시면 됩니다.
           </p>
           <div className="mt-8">
             <Link
@@ -224,9 +225,25 @@ export default function ExpertRegisterPage() {
     <div className="mx-auto max-w-3xl px-6 py-16 lg:px-8 lg:py-20">
       <SectionTitle
         eyebrow="전문가 등록"
-        title="Assign 전문가 풀에 합류하세요"
-        description="프로필과 수행 경험을 등록하면 검증 후 활동이 시작됩니다. 전문분야에 맞는 기업 의뢰를 우선적으로 받아 제안 기회를 확보하세요."
+        title="Assign 디렉토리에 등록해보세요"
+        description="프로필과 수행 경험을 등록하시면 디렉토리에 게시됩니다. 전문분야에 부합하는 의뢰가 등록될 때 안내를 받고, 본인이 제안 여부를 직접 판단할 수 있습니다."
       />
+
+      {/*
+        COMPLIANCE 디스클레이머 — 전문가에게 플랫폼의 역할 한계를 명시.
+        직역 규제(회계/세무/법률)상 '특정 전문가 추천/계약 중개'로 오해되지 않도록
+        반드시 폼 입력 전 단계에서 노출한다.
+      */}
+      <div className="mt-6 rounded-lg border border-navy-100 bg-[#f7f9fc] p-4 text-xs leading-relaxed text-navy-600">
+        <p>
+          <strong className="font-semibold text-navy-900">
+            Assign은 정보 게시 및 확인 기능만 제공합니다.
+          </strong>{" "}
+          제안 여부와 보수 조건은 전문가께서 직접 결정하시며, 플랫폼은
+          계약 당사자가 아닙니다. 등록된 정보는 디렉토리에 게시되어 의뢰자가 직접
+          확인할 수 있습니다.
+        </p>
+      </div>
 
       <form
         onSubmit={handleSubmit}
@@ -305,8 +322,8 @@ export default function ExpertRegisterPage() {
             </span>
           </label>
           <p className="mb-2 text-xs text-navy-500">
-            실제 수임 가능한 분야만 선택해주세요. 너무 많이 선택하면 매칭 우선순위에서
-            밀릴 수 있습니다.
+            실제 수임 가능한 분야만 선택해주세요. 디렉토리 검색·필터에서 본인이
+            정확히 노출되도록 하기 위함입니다.
           </p>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {SERVICE_CATEGORIES.map((cat) => {
@@ -392,8 +409,8 @@ export default function ExpertRegisterPage() {
               평균 보수 범위 <span className="text-red-500">*</span>
             </label>
             <p className="mb-2 text-xs text-navy-500">
-              건당 평균 보수입니다. 의뢰 예산과 맞춰 매칭 정확도를 높이기 위한 정보로,
-              실제 보수는 건별 협의로 결정됩니다.
+              건당 평균 보수입니다. 의뢰자가 예산과 맞춰 직접 비교·확인하기 위한
+              정보로, 실제 보수는 건별 협의로 결정됩니다.
             </p>
             <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
               {FEE_RANGES.map((opt) => {

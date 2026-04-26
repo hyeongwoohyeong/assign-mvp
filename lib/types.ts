@@ -32,12 +32,16 @@ export interface Expert {
   verified: boolean;
 }
 
+// COMPLIANCE NOTE:
+// 의뢰 상태값은 "운영자가 매칭한다"는 인상을 주지 않도록 정의한다.
+//   접수완료 → 제안진행 → 제안도착 → 선택완료
+// "매칭" 단어는 사용하지 않는다.
 export interface ClientRequest {
   id: string;
   company: string;
   serviceType: ServiceCategory;
   budget: BudgetRange;
-  status: "검토중" | "매칭중" | "제안완료" | "수임완료";
+  status: "접수완료" | "제안진행" | "제안도착" | "선택완료";
   createdAt: string; // ISO date
 }
 

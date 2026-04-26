@@ -9,7 +9,9 @@ import type { ServiceCategory } from "@/lib/types";
 export default function ExpertsPage() {
   const [filter, setFilter] = useState<ServiceCategory | "전체">("전체");
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState<"이름순" | "경력우선">("이름순");
+  // COMPLIANCE: 정렬은 "추천"이 아닌 단순 기준만 노출.
+  // "경력우선" 같은 표현은 추천/순위로 오해될 수 있어 사용하지 않는다.
+  const [sort, setSort] = useState<"이름순" | "전문분야 다수순">("이름순");
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -40,10 +42,26 @@ export default function ExpertsPage() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-16 lg:px-8 lg:py-20">
       <SectionTitle
-        eyebrow="전문가 풀"
-        title="검증된 전문가를 직접 만나보세요"
-        description="자격, 경력, 거래 이력을 사전 검증한 전문가들로 구성되어 있습니다. 본 페이지의 정보는 MVP 단계의 예시 데이터입니다."
+        eyebrow="전문가 디렉토리"
+        title="등록된 전문가를 직접 확인하세요"
+        description="전문가 본인이 등록한 자격·경력·전문분야 정보를 기반으로 게시되는 디렉토리입니다. 본 페이지의 정보는 MVP 단계의 예시 데이터입니다."
       />
+
+      {/*
+        COMPLIANCE 디스클레이머 — 디렉토리는 정보 게시이며, 추천이 아님을 명시.
+        직역 규제(회계/세무/법률)상 '특정 전문가 추천/우선 노출'로 해석되지 않도록
+        반드시 목록 상단에 노출한다.
+      */}
+      <div className="mt-6 rounded-lg border border-navy-100 bg-[#f7f9fc] p-4 text-xs leading-relaxed text-navy-600">
+        <p>
+          <strong className="font-semibold text-navy-900">
+            본 디렉토리는 전문가가 직접 등록한 정보 기반으로 구성됩니다.
+          </strong>{" "}
+          Assign은 특정 전문가를 추천하지 않으며, 정렬·노출 순서는 추천을 의미하지
+          않습니다. 이용자는 각 전문가의 정보를 확인하신 후 직접 판단하시기
+          바랍니다.
+        </p>
+      </div>
 
       <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-2">
@@ -87,12 +105,14 @@ export default function ExpertsPage() {
           </div>
           <select
             value={sort}
-            onChange={(e) => setSort(e.target.value as "이름순" | "경력우선")}
-            className="input-base w-32 shrink-0 px-3"
+            onChange={(e) =>
+              setSort(e.target.value as "이름순" | "전문분야 다수순")
+            }
+            className="input-base w-40 shrink-0 px-3"
             aria-label="정렬 기준"
           >
             <option value="이름순">이름순</option>
-            <option value="경력우선">경력우선</option>
+            <option value="전문분야 다수순">전문분야 다수순</option>
           </select>
           <button
             type="button"

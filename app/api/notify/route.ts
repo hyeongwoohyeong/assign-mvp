@@ -167,7 +167,7 @@ const LABELS: Record<string, string> = {
   budget: "예상 용역금액",
   startDate: "희망 착수 시점",
   description: "프로젝트 설명",
-  confidential: "보안 매칭 요청",
+  confidential: "회사명 비공개 요청",
   // expert form
   name: "이름",
   firm: "소속",

@@ -4,9 +4,12 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const SITE_NAME = "Assign";
-const SITE_TITLE = "Assign | 검증된 전문가와 기업을 잇는 B2B 전문서비스 마켓플레이스";
+// COMPLIANCE NOTE: 직역 규제(회계/세무/법률)상 '연결/매칭/추천' 표현 회피.
+// 사이트 포지셔닝은 "의뢰 게시 + 전문가 디렉토리 + 자율 제안" 플랫폼.
+const SITE_TITLE =
+  "Assign | 전문서비스 의뢰 등록 · 전문가 디렉토리 플랫폼";
 const SITE_DESCRIPTION =
-  "Assign은 회계, 세무, 재무자문, 컨설팅 등 전문서비스를 필요로 하는 기업과 검증된 전문가를 연결하는 B2B 마켓플레이스입니다.";
+  "Assign은 회계, 세무, 재무자문, 컨설팅 등 전문서비스를 필요로 하는 기업과 전문가가 직접 만나는 의뢰·디렉토리 플랫폼입니다. 특정 전문가를 추천하거나 계약을 중개하지 않으며, 정보 게시 및 확인 기능만 제공합니다.";
 const SITE_URL =
   (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
     ?.env?.NEXT_PUBLIC_SITE_URL ?? "https://assign.example.com";
@@ -31,7 +34,7 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "Assign - B2B 전문서비스 마켓플레이스",
+        alt: "Assign - 전문서비스 의뢰·디렉토리 플랫폼",
       },
     ],
   },

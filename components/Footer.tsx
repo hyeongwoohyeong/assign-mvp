@@ -15,7 +15,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-navy-500">
-              검증된 전문가와 기업을 연결하는<br />B2B 전문서비스 마켓플레이스
+              전문서비스 의뢰 등록과<br />전문가 디렉토리 게시 플랫폼
             </p>
           </div>
 
@@ -24,12 +24,12 @@ export default function Footer() {
             <ul className="mt-3 space-y-2 text-sm text-navy-600">
               <li>
                 <Link href="/request" className="hover:text-navy-900">
-                  용역 의뢰
+                  의뢰 등록
                 </Link>
               </li>
               <li>
                 <Link href="/experts" className="hover:text-navy-900">
-                  전문가 찾기
+                  전문가 디렉토리
                 </Link>
               </li>
               <li>
@@ -50,7 +50,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/#service" className="hover:text-navy-900">
-                  매칭 방식
+                  이용 방법
                 </Link>
               </li>
               <li>

@@ -7,28 +7,14 @@ interface ExpertCardProps {
 export default function ExpertCard({ expert }: ExpertCardProps) {
   return (
     <div className="flex h-full flex-col rounded-xl border border-navy-100 bg-white p-6 shadow-soft transition hover:border-navy-300 hover:shadow-card">
+      {/*
+        COMPLIANCE NOTE:
+        '인증 전문가' 배지는 Assign이 특정 전문가를 보증·추천하는 인상을 줄 수 있어 제거.
+        자격 정보는 카드 하단의 '자격' 필드로만 노출하고, 이용자가 직접 판단하도록 한다.
+      */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-bold text-navy-900">{expert.name}</h3>
-            {expert.verified && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-navy-900/5 px-2 py-0.5 text-xs font-medium text-navy-700">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="h-3 w-3 text-navy-700"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M12 2.25l2.6 2.115 3.342-.31.83 3.255 2.748 1.94-1.354 3.075 1.354 3.075-2.748 1.94-.83 3.255-3.342-.31L12 21.75l-2.6-2.115-3.342.31-.83-3.255-2.748-1.94 1.354-3.075-1.354-3.075 2.748-1.94.83-3.255 3.342.31L12 2.25zm-1.06 13.06l5.25-5.25-1.06-1.06-4.19 4.19-1.94-1.94-1.06 1.06 3 3z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                인증 전문가
-              </span>
-            )}
-          </div>
+          <h3 className="text-lg font-bold text-navy-900">{expert.name}</h3>
           <p className="mt-1 text-sm font-medium text-navy-600">{expert.firm}</p>
         </div>
       </div>

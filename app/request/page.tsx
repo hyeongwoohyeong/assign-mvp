@@ -14,7 +14,7 @@ const BUDGET_RANGES: BudgetRange[] = [
 ];
 
 // 희망 착수 시점은 자유 입력 대신 4개의 표준화된 옵션으로 받는다.
-// 운영자가 의뢰 정리할 때 정규화 부담을 줄이고, 매칭 시 일정 우선순위를 빠르게 판단할 수 있다.
+// 의뢰 정리 부담을 줄이고, 전문가가 일정 우선순위를 빠르게 판단할 수 있도록 한다.
 const START_DATE_OPTIONS = ["1주 내", "1개월 내", "1~3개월", "협의 가능"] as const;
 type StartDateOption = (typeof START_DATE_OPTIONS)[number] | "";
 
@@ -170,13 +170,19 @@ export default function RequestPage() {
             </div>
           )}
           <p className="mt-5 text-sm leading-relaxed text-navy-600">
-            Assign 운영팀이 의뢰 내용을 직접 검토한 뒤,
+            등록하신 의뢰 정보가 전문가 풀에 공유됩니다.
             <br />
-            영업일 기준 1~2일 내에 적합한 전문가들을 매칭하여 연락드리겠습니다.
+            관심 있는 전문가가 직접 검토 후, 영업일 기준 1~2일 내에 제안 또는 연락이
+            도착할 수 있습니다.
+          </p>
+          <p className="mt-4 rounded-lg bg-[#f7f9fc] px-4 py-3 text-xs leading-relaxed text-navy-600">
+            ※ Assign은 특정 전문가를 추천하거나 계약을 중개하지 않습니다. 전문가
+            제안 검토와 계약 여부, 조건은 모두 의뢰자께서 직접 결정하시며, 플랫폼은
+            계약의 당사자가 아닙니다.
           </p>
           <p className="mt-3 text-xs text-navy-500">
             의뢰 관련 문의는 <strong>contact@getassign.kr</strong> 또는 접수 안내
-            메일에 회신해주시면 같은 의뢰로 연결됩니다.
+            메일에 회신해주시면 같은 의뢰로 이어집니다.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
@@ -189,7 +195,7 @@ export default function RequestPage() {
               href="/experts"
               className="inline-flex items-center justify-center rounded-lg border border-navy-200 px-6 py-3 text-sm font-semibold text-navy-900 hover:border-navy-400"
             >
-              전문가 풀 살펴보기
+              전문가 디렉토리 보기
             </Link>
           </div>
         </div>
@@ -200,10 +206,26 @@ export default function RequestPage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-16 lg:px-8 lg:py-20">
       <SectionTitle
-        eyebrow="용역 의뢰"
+        eyebrow="의뢰 등록"
         title="필요한 전문서비스를 등록해주세요"
-        description="핵심 정보만 입력하면 검증된 전문가 제안을 빠르게 받아볼 수 있습니다. 입력 내용은 매칭 검토 목적 외에는 사용되지 않습니다."
+        description="핵심 정보만 입력하면, 등록된 의뢰 정보가 전문가 풀에 공유되어 관심 있는 전문가가 직접 제안할 수 있습니다. 입력 내용은 의뢰 등록 목적 외에는 사용되지 않습니다."
       />
+
+      {/*
+        COMPLIANCE 디스클레이머 — 의뢰자에게 플랫폼의 역할 한계를 명시.
+        직역 규제(회계/세무/법률)상 '추천/매칭/중개'로 오해되지 않도록
+        반드시 폼 입력 전 단계에서 노출한다.
+      */}
+      <div className="mt-6 rounded-lg border border-navy-100 bg-[#f7f9fc] p-4 text-xs leading-relaxed text-navy-600">
+        <p>
+          <strong className="font-semibold text-navy-900">
+            Assign은 특정 전문가를 추천하거나 계약을 중개하지 않습니다.
+          </strong>{" "}
+          등록된 의뢰 정보는 전문가 풀에 공유되며, 관심 있는 전문가가 직접 제안할
+          수 있습니다. 제안 검토와 계약 여부, 조건은 모두 당사자 간 자율적으로
+          결정됩니다.
+        </p>
+      </div>
 
       <form
         onSubmit={handleSubmit}
@@ -415,8 +437,8 @@ export default function RequestPage() {
           <label htmlFor="confidential" className="text-sm text-navy-700">
             <span className="font-semibold text-navy-900">보안이 필요합니다</span>
             <span className="ml-1">
-              — 회사명, 담당자명, 회사 이메일 도메인을 가린 익명 요약본 형태로
-              전문가에게 전달합니다.
+              — 회사명, 담당자명, 회사 이메일 도메인을 가린 익명 요약본 형태로만
+              전문가에게 공유됩니다.
             </span>
           </label>
         </div>

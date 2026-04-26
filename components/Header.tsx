@@ -57,7 +57,7 @@ export default function Header() {
             href="/request"
             className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-navy-800"
           >
-            용역 의뢰하기
+            의뢰 등록하기
           </Link>
         </div>
 
@@ -122,7 +122,7 @@ export default function Header() {
               className="mt-2 rounded-lg bg-navy-900 px-4 py-2.5 text-center text-sm font-semibold text-white"
               onClick={() => setOpen(false)}
             >
-              용역 의뢰하기
+              의뢰 등록하기
             </Link>
           </nav>
         </div>

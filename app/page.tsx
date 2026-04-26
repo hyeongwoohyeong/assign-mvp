@@ -12,24 +12,30 @@ import {
   SERVICE_CATEGORY_DESCRIPTIONS,
 } from "@/lib/mockData";
 
+// COMPLIANCE NOTE:
+// 한국 회계/세무/법률 직역 규제상, 플랫폼이 특정 전문가를 추천하거나
+// 계약을 중개한다는 인상을 주면 안 됩니다. 본 사이트는 "정보 게시 + 자율 제안"
+// 구조이며, 모든 카피는 다음 원칙을 따릅니다.
+//   - 사용 표현: 등록 / 제안 / 선택 / 확인 / 게시
+//   - 회피 표현: 매칭 / 추천 / 연결해드립니다 / 찾아드립니다 / 중개
 const COMPANY_STEPS = [
   {
     step: "01",
-    title: "필요한 용역 등록",
+    title: "의뢰 등록",
     description:
-      "회사 상황과 필요한 서비스, 예산, 일정을 입력하면 적합한 전문가 풀에 즉시 전달됩니다.",
+      "회사 상황과 필요한 서비스, 예산, 일정을 입력해 의뢰를 등록합니다.",
   },
   {
     step: "02",
-    title: "검증된 전문가 제안 수령",
+    title: "전문가의 제안 수신",
     description:
-      "Assign이 자격, 경력, 거래 이력을 검증한 전문가들로부터 제안을 받습니다.",
+      "등록된 의뢰는 전문가 풀에 공유되며, 관심 있는 전문가가 직접 제안할 수 있습니다.",
   },
   {
     step: "03",
-    title: "적합한 전문가 선택",
+    title: "직접 비교 후 선택",
     description:
-      "제안 내용과 비용을 비교하고, 가장 적합한 전문가와 직접 계약을 진행합니다.",
+      "도착한 제안 내용과 보수 조건을 비교하고, 적합하다고 판단되는 전문가와 직접 계약을 진행합니다.",
   },
 ];
 
@@ -38,77 +44,80 @@ const EXPERT_STEPS = [
     step: "01",
     title: "프로필 등록",
     description:
-      "전문분야, 자격, 수행 경험을 등록하면 내부 검증을 거쳐 활동이 시작됩니다.",
+      "전문분야, 자격, 수행 경험을 등록하시면 디렉토리에 게시됩니다.",
   },
   {
     step: "02",
-    title: "적합한 용역 알림 수신",
+    title: "등록 의뢰 확인",
     description:
-      "본인의 전문 분야와 일치하는 의뢰가 등록되면 실시간으로 알림을 받습니다.",
+      "전문분야에 부합하는 의뢰가 등록되면 안내를 받고, 본인이 제안 여부를 직접 판단합니다.",
   },
   {
     step: "03",
-    title: "제안 및 수임 기회 확보",
+    title: "자율 제안 및 수임",
     description:
-      "기업에 직접 제안하고, 신규 거래처를 안정적으로 확보할 수 있습니다.",
+      "관심 있는 의뢰에 직접 제안하고, 기업과 직접 협의해 계약을 체결합니다.",
   },
 ];
 
 const QUICK_START = [
   {
     title: "기업으로 시작하기",
-    description: "의뢰 목적, 예산, 일정을 입력하면 검증된 전문가 제안을 받을 수 있습니다.",
+    description:
+      "의뢰 내용, 예산, 일정을 등록하면 전문가들이 직접 제안할 수 있습니다.",
     href: "/request",
     cta: "의뢰 등록하기",
   },
   {
     title: "전문가로 참여하기",
-    description: "프로필과 수행 경험을 등록하면 전문분야에 맞는 의뢰를 받아볼 수 있습니다.",
+    description:
+      "프로필과 수행 경험을 등록해 디렉토리에 노출하고, 관심 있는 의뢰에 직접 제안하세요.",
     href: "/expert-register",
     cta: "등록 신청하기",
   },
   {
-    title: "전문가 풀 먼저 보기",
-    description: "현재 어떤 분야의 전문가들이 활동 중인지 미리 확인해볼 수 있습니다.",
+    title: "전문가 디렉토리 둘러보기",
+    description:
+      "어떤 분야의 전문가들이 등록되어 있는지 직접 확인하고 비교해보세요.",
     href: "/experts",
-    cta: "디렉터리 보기",
+    cta: "디렉토리 보기",
   },
 ];
 
 const TESTIMONIALS = [
   {
     quote:
-      "기존에는 소개받은 한 곳에 바로 맡겼는데, Assign으로 3개 제안을 비교하고 예산을 20% 절감했습니다.",
+      "기존에는 소개받은 한 곳에 바로 맡겼는데, Assign에 의뢰를 등록한 뒤 받은 3개 제안을 비교해 예산을 20% 절감했습니다.",
     author: "재무팀장 · SaaS 스타트업",
   },
   {
     quote:
-      "재무실사 전문가를 급하게 찾아야 했는데, 요청 등록 후 빠르게 연결되어 투자 일정에 맞출 수 있었습니다.",
+      "재무실사가 급했는데, 의뢰 등록 후 전문가들의 제안을 빠르게 받아 투자 일정에 맞출 수 있었습니다.",
     author: "대표 · 커머스 기업",
   },
   {
     quote:
-      "전문분야에 맞는 의뢰만 받아 제안하니 불필요한 영업 시간이 줄고 수임 전환율이 올라갔습니다.",
+      "디렉토리에 등록해 두니, 전문분야에 맞는 의뢰를 직접 확인하고 제안할 수 있어 영업 부담이 줄었습니다.",
     author: "회계사 · 독립 전문가",
   },
 ];
 
 const FAQ_ITEMS = [
   {
-    q: "의뢰 등록에 비용이 드나요?",
-    a: "MVP 단계에서는 의뢰 등록은 무료이며, 매칭 및 제안 비교 흐름을 우선 검증하고 있습니다.",
+    q: "의뢰 등록과 제안 수신에 비용이 드나요?",
+    a: "의뢰 등록과 전문가의 제안 수신은 모두 무료입니다. Assign은 정보 게시·확인 기능만 제공하며, 계약 성사에 따른 별도의 중개·성공 수수료를 받지 않습니다.",
   },
   {
     q: "민감한 정보도 등록 가능한가요?",
-    a: "가능합니다. 비공개 매칭 옵션을 통해 기업명 및 민감 정보를 제한적으로 공유할 수 있습니다.",
+    a: "비공개 옵션을 선택하시면 회사명·담당자명·회사 이메일 도메인을 가린 익명 요약본 형태로만 의뢰가 게시됩니다.",
   },
   {
-    q: "전문가 검증은 어떻게 진행되나요?",
-    a: "등록 시 자격/경력 정보를 확인하고, 기본 검증을 통과한 전문가 중심으로 매칭이 진행됩니다.",
+    q: "전문가 등록 정보는 어떻게 게시되나요?",
+    a: "전문가가 직접 입력한 자격·경력 정보를 기준으로 디렉토리에 게시됩니다. Assign은 특정 전문가를 추천하지 않으며, 이용자가 직접 확인하고 판단하셔야 합니다.",
   },
   {
-    q: "현재 바로 계약까지 가능한가요?",
-    a: "현재는 MVP로 제안 접수/비교 경험에 집중하고 있으며, 계약/결제는 운영 단계에서 순차적으로 확장됩니다.",
+    q: "Assign이 계약을 중개하나요?",
+    a: "Assign은 의뢰 등록·전문가 디렉토리·제안 수신 등 정보 게시 기능만 제공합니다. 계약 여부와 조건은 의뢰자와 전문가가 직접 결정하시며, 플랫폼은 계약 당사자가 아닙니다.",
   },
 ];
 
@@ -135,18 +144,19 @@ export default function HomePage() {
               회계 · 세무 · 재무자문 · 컨설팅
             </span>
             <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-navy-900 sm:text-5xl lg:text-6xl">
-              지인 추천 대신,
+              기업이 필요한 전문서비스를 등록하고,
               <br />
-              검증된 전문가 제안을 받아보세요.
+              전문가의 제안을 받아보세요.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-navy-600">
-              Assign은 회계법인, 세무법인, 컨설팅펌의 검증된 전문가와 기업을 직접
-              연결하는 B2B 전문서비스 마켓플레이스입니다. 평균 3분 내 의뢰 등록으로
-              다수의 전문가 제안을 비교하고, 더 빠르게 의사결정을 내리세요.
+              Assign은 회계, 세무, 재무, 컨설팅 등 전문서비스를 필요로 하는 기업과
+              전문가가 직접 만나는 의뢰·디렉토리 플랫폼입니다. Assign은 특정
+              전문가를 추천하거나 계약을 중개하지 않으며, 정보 게시 및 확인 기능만
+              제공합니다.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button href="/request" size="lg">
-                3분 만에 의뢰 시작하기
+                3분 만에 의뢰 등록
               </Button>
               <Button href="/expert-register" variant="secondary" size="lg">
                 전문가로 참여하기
@@ -160,6 +170,12 @@ export default function HomePage() {
                 홈에서 바로 의뢰 작성
               </Button>
             </div>
+            <p className="mt-5 max-w-2xl text-xs leading-relaxed text-navy-500">
+              ※ Assign은 전문가를 추천하거나 계약을 중개하지 않습니다. 등록된
+              의뢰 정보는 전문가 풀에 공유되며, 관심 있는 전문가가 직접
+              제안할 수 있습니다. 계약 여부와 조건은 당사자 간 자율적으로
+              결정됩니다.
+            </p>
 
             <div className="mt-12 grid grid-cols-2 gap-6 border-t border-navy-100 pt-8 sm:grid-cols-3">
               <div>
@@ -167,12 +183,12 @@ export default function HomePage() {
                 <p className="mt-1 text-sm text-navy-500">핵심 전문서비스 영역</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-navy-900">사전</p>
-                <p className="mt-1 text-sm text-navy-500">자격/경력 검증 프로세스</p>
+                <p className="text-2xl font-bold text-navy-900">자율</p>
+                <p className="mt-1 text-sm text-navy-500">전문가의 자율 제안</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-navy-900">비공개</p>
-                <p className="mt-1 text-sm text-navy-500">기업 전용 매칭 옵션</p>
+                <p className="mt-1 text-sm text-navy-500">기업명 비공개 옵션 지원</p>
               </div>
             </div>
           </div>
@@ -278,19 +294,19 @@ export default function HomePage() {
               <ul className="mt-4 space-y-3 text-sm leading-relaxed text-navy-100">
                 <li className="flex gap-3">
                   <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-white/60" />
-                  필요한 용역을 등록하면 검증된 전문가들이 직접 제안합니다.
+                  의뢰를 등록하면 전문가들이 직접 확인하고 자율적으로 제안합니다.
                 </li>
                 <li className="flex gap-3">
                   <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-white/60" />
-                  자격, 경력, 거래 이력을 사전 검증한 풀에서만 매칭이 이루어집니다.
+                  자격·경력 정보를 입력한 전문가들이 디렉토리에 게시되어 비교 가능합니다.
                 </li>
                 <li className="flex gap-3">
                   <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-white/60" />
-                  표준화된 제안 양식으로 비교가 가능해집니다.
+                  표준화된 제안 양식으로 비교 의사결정이 쉬워집니다.
                 </li>
                 <li className="flex gap-3">
                   <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-white/60" />
-                  민감한 정보는 비공개 매칭으로 안전하게 처리됩니다.
+                  비공개 옵션으로 회사명·담당자명을 가린 익명 형태로 의뢰를 등록할 수 있습니다.
                 </li>
               </ul>
             </div>
@@ -303,8 +319,8 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-6 lg:px-8">
           <SectionTitle
             eyebrow="For Companies"
-            title="의뢰부터 비교까지, 3단계로 끝납니다"
-            description="서비스 범위와 일정만 입력하면 검증된 전문가 제안을 받아 비교할 수 있습니다."
+            title="의뢰 등록부터 비교까지, 3단계"
+            description="서비스 범위와 일정을 등록하면, 관심 있는 전문가들의 제안을 받아 직접 비교·선택할 수 있습니다."
           />
 
           <div className="mt-12 grid gap-6 md:grid-cols-3">
@@ -328,7 +344,7 @@ export default function HomePage() {
 
           <div className="mt-10">
             <Button href="/request" size="lg">
-              용역 의뢰하기
+              의뢰 등록하기
             </Button>
           </div>
         </div>
@@ -339,8 +355,8 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl px-6 lg:px-8">
           <SectionTitle
             eyebrow="For Experts"
-            title="검증 기반 리드로 본업에 집중하세요"
-            description="직접 영업 대신, 전문분야에 맞는 기업 의뢰를 받고 제안에 집중할 수 있습니다."
+            title="등록된 의뢰를 직접 확인하고 자율 제안"
+            description="디렉토리에 프로필을 게시하고, 본인 전문분야에 맞는 의뢰가 등록될 때 제안 여부를 직접 판단할 수 있습니다."
           />
 
           <div className="mt-12 grid gap-6 md:grid-cols-3">
@@ -386,7 +402,7 @@ export default function HomePage() {
               value={`${ADMIN_SUMMARY.registeredExperts}명`}
             />
             <SnapshotCard
-              label="매칭 검토 중"
+              label="제안 진행 중"
               value={`${ADMIN_SUMMARY.matchingInReview}건`}
             />
             <SnapshotCard label="월간 제안 완료" value={`${ADMIN_SUMMARY.proposalsSent}건`} />
@@ -395,7 +411,7 @@ export default function HomePage() {
           <div className="mt-8 rounded-xl border border-navy-100 bg-[#f7f9fc] p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-base font-semibold text-navy-900">
-                최근 등록된 인증 전문가 미리보기
+                최근 등록된 전문가 미리보기
               </h3>
               <Link
                 href="/experts"
@@ -508,7 +524,7 @@ export default function HomePage() {
                   href="/experts"
                   className="inline-flex items-center gap-1 text-sm font-semibold text-navy-900 underline-offset-4 hover:underline"
                 >
-                  전문가 풀 살펴보기 →
+                  전문가 디렉토리 살펴보기 →
                 </Link>
               </div>
             </div>
@@ -566,10 +582,10 @@ export default function HomePage() {
           <div className="flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
             <div>
               <h2 className="text-2xl font-bold text-white sm:text-3xl">
-                신뢰할 수 있는 전문가 매칭, 지금 시작하세요
+                의뢰 등록과 전문가 제안, 지금 시작하세요
               </h2>
               <p className="mt-2 text-base text-navy-200">
-                기업은 의뢰를 등록하고, 전문가는 프로필을 등록해 첫 제안을 받아보세요.
+                기업은 의뢰를 등록하고, 전문가는 프로필을 등록해 자율적으로 제안을 주고받을 수 있습니다.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">

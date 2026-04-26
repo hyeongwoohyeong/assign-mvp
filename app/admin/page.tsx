@@ -13,12 +13,12 @@ export default function AdminPage() {
   const summaryCards = [
     { label: "신규 의뢰", value: ADMIN_SUMMARY.newRequests, hint: "이번 주" },
     { label: "등록 전문가", value: ADMIN_SUMMARY.registeredExperts, hint: "전체" },
-    { label: "매칭 검토중", value: ADMIN_SUMMARY.matchingInReview, hint: "현재" },
-    { label: "제안 완료", value: ADMIN_SUMMARY.proposalsSent, hint: "이번 달" },
+    { label: "제안 진행 중", value: ADMIN_SUMMARY.matchingInReview, hint: "현재" },
+    { label: "제안 도착", value: ADMIN_SUMMARY.proposalsSent, hint: "이번 달" },
   ];
   const totalRecentRequests = MOCK_RECENT_REQUESTS.length;
   const completedRequests = MOCK_RECENT_REQUESTS.filter(
-    (r) => r.status === "수임완료",
+    (r) => r.status === "선택완료",
   ).length;
   const progressRate =
     totalRecentRequests === 0
@@ -67,7 +67,7 @@ export default function AdminPage() {
           <div className="mt-2 flex items-end justify-between">
             <p className="text-2xl font-bold text-navy-900">{progressRate}%</p>
             <p className="text-xs text-navy-500">
-              수임완료 {completedRequests} / 최근의뢰 {totalRecentRequests}
+              선택완료 {completedRequests} / 최근의뢰 {totalRecentRequests}
             </p>
           </div>
           <div className="mt-3 h-2 w-full rounded-full bg-navy-100">
@@ -211,11 +211,12 @@ export default function AdminPage() {
 }
 
 function RequestStatus({ status }: { status: string }) {
+  // COMPLIANCE: 상태 라벨에 "매칭" 표현을 사용하지 않는다.
   const styles: Record<string, string> = {
-    검토중: "bg-amber-50 text-amber-700 ring-amber-200",
-    매칭중: "bg-blue-50 text-blue-700 ring-blue-200",
-    제안완료: "bg-indigo-50 text-indigo-700 ring-indigo-200",
-    수임완료: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    접수완료: "bg-amber-50 text-amber-700 ring-amber-200",
+    제안진행: "bg-blue-50 text-blue-700 ring-blue-200",
+    제안도착: "bg-indigo-50 text-indigo-700 ring-indigo-200",
+    선택완료: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   };
   return (
     <span

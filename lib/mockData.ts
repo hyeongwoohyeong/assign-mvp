@@ -88,7 +88,7 @@ export const MOCK_RECENT_REQUESTS: ClientRequest[] = [
     company: "엔라이트 주식회사",
     serviceType: "재무실사",
     budget: "1,000만원~3,000만원",
-    status: "매칭중",
+    status: "제안진행",
     createdAt: "2026-04-22",
   },
   {
@@ -96,7 +96,7 @@ export const MOCK_RECENT_REQUESTS: ClientRequest[] = [
     company: "코어테크",
     serviceType: "기업가치평가",
     budget: "1,000만원~3,000만원",
-    status: "검토중",
+    status: "접수완료",
     createdAt: "2026-04-21",
   },
   {
@@ -104,7 +104,7 @@ export const MOCK_RECENT_REQUESTS: ClientRequest[] = [
     company: "비전홀딩스",
     serviceType: "세무신고",
     budget: "300만원 이하",
-    status: "제안완료",
+    status: "제안도착",
     createdAt: "2026-04-19",
   },
   {
@@ -112,7 +112,7 @@ export const MOCK_RECENT_REQUESTS: ClientRequest[] = [
     company: "이지푸드",
     serviceType: "세무기장",
     budget: "300만원 이하",
-    status: "수임완료",
+    status: "선택완료",
     createdAt: "2026-04-18",
   },
   {
@@ -120,7 +120,7 @@ export const MOCK_RECENT_REQUESTS: ClientRequest[] = [
     company: "넥서스랩",
     serviceType: "M&A 자문",
     budget: "3,000만원 이상",
-    status: "검토중",
+    status: "접수완료",
     createdAt: "2026-04-17",
   },
 ];
