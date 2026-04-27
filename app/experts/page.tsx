@@ -44,7 +44,7 @@ export default function ExpertsPage() {
       <SectionTitle
         eyebrow="전문가 디렉토리"
         title="등록된 전문가를 직접 확인하세요"
-        description="전문가 본인이 등록한 자격·경력·전문분야 정보를 기반으로 게시되는 디렉토리입니다. 본 페이지의 정보는 MVP 단계의 예시 데이터입니다."
+        description="전문가 본인이 등록한 자격·경력·전문분야 정보를 기반으로 게시되는 디렉토리입니다. Assign은 특정 전문가를 추천하지 않으며, 노출 순서는 추천을 의미하지 않습니다."
       />
 
       {/*
@@ -140,9 +140,31 @@ export default function ExpertsPage() {
 
       {filtered.length === 0 && (
         <div className="mt-12 rounded-xl border border-dashed border-navy-200 bg-white p-12 text-center">
-          <p className="text-sm text-navy-500">
-            조건에 맞는 전문가가 없습니다. 필터를 변경해보세요.
+          <p className="text-base font-semibold text-navy-900">
+            조건에 맞는 전문가가 없습니다
           </p>
+          <p className="mt-2 text-sm text-navy-500">
+            필터를 변경하거나, 디렉토리에 등록을 신청해 새로운 전문가가 합류하도록 도와주세요.
+          </p>
+          <div className="mt-5 flex flex-col items-center justify-center gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => {
+                setFilter("전체");
+                setQuery("");
+                setSort("이름순");
+              }}
+              className="rounded-lg border border-navy-200 px-4 py-2 text-sm font-semibold text-navy-800 hover:border-navy-400"
+            >
+              필터 초기화
+            </button>
+            <a
+              href="/expert-register"
+              className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800"
+            >
+              전문가 등록 신청 →
+            </a>
+          </div>
         </div>
       )}
     </div>

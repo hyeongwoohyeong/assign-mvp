@@ -8,9 +8,10 @@ import type {
   ContactRequest,
 } from "./types";
 
-// NOTE: All data here is mock data for the MVP.
-// Replace with real database queries (e.g. Supabase / Firestore / REST API)
-// when the backend is in place.
+// NOTE: 본 모듈은 서비스 카테고리·디스크립션 등 정적 카탈로그와,
+// 백엔드 연동 전까지 비어 있는 컬렉션 정의를 담는다.
+// 실제 의뢰/제안/연락 요청은 사용자 본인의 storage 와 운영자 메일 알림으로
+// 흐름이 이어지며, DB 연동 시 본 빈 배열들이 실제 쿼리로 교체된다.
 
 export const SERVICE_CATEGORIES: ServiceCategory[] = [
   "회계감사",
@@ -70,7 +71,7 @@ export const MOCK_EXPERTS: Expert[] = [
 ];
 
 // 운영 대시보드 — "최근 의뢰 내역" 표.
-// 실제 의뢰는 폼 → 메일 → DB 연동 후에 채워진다. MVP 단계에서는 빈 배열.
+// 실제 의뢰는 폼 → 메일 → DB 연동 후에 채워진다.
 export const MOCK_RECENT_REQUESTS: ClientRequest[] = [];
 
 // 운영 대시보드 — "최근 전문가 등록" 표. 실제 가입자만 노출.
@@ -104,15 +105,15 @@ export const ADMIN_SUMMARY = {
 // 구조를 시각화하기 위한 예시이며, Assign이 특정 전문가에게 의뢰를 전달하거나
 // 매칭한다는 인상을 주지 않도록 구성한다.
 
-// 공개 의뢰 보드 — 실제 의뢰가 등록되면 이 배열이 채워진다.
-// MVP 초기 단계에서는 빈 배열 → 보드 페이지가 "업데이트 예정" 안내를 노출한다.
+// 공개 의뢰 보드 — 실제 의뢰가 등록되면 이 배열이 채워진다. 초기 상태에서는
+// 사용자 본인이 등록한 의뢰만 storage 에서 합쳐져 노출된다.
 export const MOCK_PUBLIC_REQUESTS: PublicRequest[] = [];
 
-// 의뢰별 제안 — MVP 초기 단계에서는 빈 배열.
+// 의뢰별 제안 — 초기 상태는 빈 배열.
 //
 // COMPLIANCE: requestedContact: true 여도 status 가 '연락허용' 으로 바뀌기
-// 전까지는 절대 어떠한 연락처도 노출하지 않는다. 본 mock 에서는 연락처 자체를
-// 데이터에 포함하지 않음으로써 실수로라도 노출되는 일이 없도록 한다.
+// 전까지는 절대 어떠한 연락처도 노출하지 않는다. 연락처 자체를 데이터에
+// 포함하지 않음으로써 실수로라도 노출되는 일이 없도록 한다.
 export const MOCK_PROPOSALS: Proposal[] = [];
 
 // 디렉토리에서 클라이언트가 전문가에게 직접 보낸 연락 요청 — 초기 빈 상태.

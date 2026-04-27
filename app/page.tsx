@@ -91,22 +91,14 @@ const QUICK_START = [
   },
 ];
 
-const TESTIMONIALS = [
-  {
-    quote:
-      "기존에는 소개받은 한 곳에 바로 맡겼는데, Assign에 의뢰를 등록한 뒤 받은 3개 제안을 비교해 예산을 20% 절감했습니다.",
-    author: "재무팀장 · SaaS 스타트업",
-  },
-  {
-    quote:
-      "재무실사가 급했는데, 의뢰 등록 후 전문가들의 제안을 빠르게 받아 투자 일정에 맞출 수 있었습니다.",
-    author: "대표 · 커머스 기업",
-  },
-  {
-    quote:
-      "디렉토리에 등록해 두니, 전문분야에 맞는 의뢰를 직접 확인하고 제안할 수 있어 영업 부담이 줄었습니다.",
-    author: "회계사 · 독립 전문가",
-  },
+// COMPLIANCE / 데이터 정합성:
+//   고객 후기는 실제 검증된 사용자 인용만 노출한다.
+//   현재는 검증된 인용이 없으므로 자리표시만 두고 "추후 업데이트 예정"으로 안내한다.
+//   가공·창작된 후기를 노출하면 추천/품질 보증으로 오해될 위험이 있다.
+const TESTIMONIALS_PLACEHOLDERS = [
+  { hint: "기업 의뢰자" },
+  { hint: "전문가" },
+  { hint: "기업 의뢰자" },
 ];
 
 const FAQ_ITEMS = [
@@ -154,10 +146,14 @@ export default function HomePage() {
             <span className="inline-flex items-center rounded-full border border-navy-200 bg-white px-3 py-1 text-xs font-medium text-navy-700">
               회계 · 세무 · 재무자문 · 컨설팅
             </span>
-            <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-navy-900 sm:text-5xl lg:text-6xl">
-              기업이 필요한 전문서비스를 등록하고,
-              <br />
-              전문가의 제안을 받아 직접 선택하세요.
+            {/*
+              HEADLINE — 자동 줄바꿈에 의존하지 않고 의미 단위로 명시적 줄바꿈.
+              각 줄이 시각적으로 균형잡히도록 block 단위로 구성한다.
+            */}
+            <h1 className="mt-6 text-4xl font-bold leading-[1.2] tracking-tight text-navy-900 sm:text-5xl lg:text-6xl">
+              <span className="block">기업이 필요한 전문서비스를 등록하면</span>
+              <span className="block">전문가의 제안을 받고</span>
+              <span className="block">직접 선택할 수 있습니다</span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-navy-600">
               Assign은 전문가 정보를 제공하고, 의뢰를 공개하여 전문가가 직접 제안할 수
@@ -402,7 +398,7 @@ export default function HomePage() {
           <SectionTitle
             eyebrow="Marketplace Snapshot"
             title="현재 플랫폼 운영 스냅샷"
-            description="MVP 기준 목업 데이터로 운영 흐름을 한눈에 확인할 수 있습니다."
+            description="누적 등록·제안·연락 요청 현황을 한눈에 확인할 수 있습니다."
           />
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -474,26 +470,40 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Social proof */}
+      {/* Social proof — 실제 후기가 검증되기 전까지는 자리표시만 노출한다. */}
       <section id="social-proof" className="border-b border-navy-100 bg-white py-20 lg:py-24">
         <div className="mx-auto max-w-6xl px-6 lg:px-8">
           <SectionTitle
             eyebrow="Customer Stories"
-            title="실제 사용자 관점의 변화"
-            description="기업과 전문가 모두에게 의미 있는 성과를 만드는 플랫폼 경험을 목표로 합니다."
+            title="고객 후기는 추후 업데이트될 예정입니다"
+            description="실제 의뢰자와 전문가의 검증된 후기만 게시하기 위해, 현재는 자리표시 영역으로만 운영하고 있습니다."
           />
           <div className="mt-10 grid gap-4 md:grid-cols-3">
-            {TESTIMONIALS.map((item) => (
+            {TESTIMONIALS_PLACEHOLDERS.map((item, idx) => (
               <figure
-                key={item.quote}
-                className="rounded-xl border border-navy-100 bg-[#f7f9fc] p-6"
+                key={`${item.hint}-${idx}`}
+                className="flex flex-col items-center justify-center rounded-xl border border-dashed border-navy-200 bg-[#f7f9fc] p-8 text-center"
               >
-                <blockquote className="text-sm leading-relaxed text-navy-700">
-                  “{item.quote}”
-                </blockquote>
-                <figcaption className="mt-4 text-xs font-semibold text-navy-500">
-                  {item.author}
-                </figcaption>
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-navy-400 ring-1 ring-navy-100">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-5 w-5"
+                    aria-hidden="true"
+                  >
+                    <path d="M3 21c3 0 6-2 6-7V8H4v6h3" />
+                    <path d="M14 21c3 0 6-2 6-7V8h-5v6h3" />
+                  </svg>
+                </span>
+                <p className="mt-3 text-sm font-semibold text-navy-800">
+                  고객 후기는 추후 업데이트될 예정입니다
+                </p>
+                <p className="mt-1 text-xs text-navy-500">{item.hint} 후기 자리</p>
               </figure>
             ))}
           </div>

@@ -10,23 +10,19 @@ import {
   listMyRequests,
   subscribe,
   updateMyContactRequest,
-  updateMyProposal,
-  updateMyRequest,
   type StoredContactRequest,
   type StoredProposal,
   type StoredRequest,
 } from "@/lib/storage";
-import {
-  revealExpertContact,
-  simulateIncomingProposals,
-} from "@/lib/simulation";
+// COMPLIANCE: revealExpertContact 는 인적 동의 후 placeholder 연락처를 노출하기 위한
+//   순수 함수로, 자동 매칭/추천 로직과 무관하다.
+import { revealExpertContact } from "@/lib/simulation";
 
 // COMPLIANCE NOTE — 내 활동 대시보드 설계 원칙:
 //   1) 본 페이지는 사용자 본인의 브라우저에 저장된 활동만 노출한다.
 //      운영자가 사용자 행동을 매칭/추천한 결과가 아니다.
-//   2) "도착한 제안"은 시뮬레이션이라는 점을 카드 단계에서 명시한다.
-//   3) 연락처는 status 가 "연락허용 / 수락" 으로 바뀐 후에만 reveal 된다.
-//   4) 모든 빈 상태에서 다음 단계로 이동할 수 있는 진입점을 제공한다.
+//   2) 연락처는 status 가 "연락허용 / 수락" 으로 바뀐 후에만 reveal 된다.
+//   3) 모든 빈 상태에서 다음 단계로 이동할 수 있는 진입점을 제공한다.
 
 type Tab = "requests" | "proposals" | "contacts" | "inbox";
 
@@ -48,8 +44,8 @@ const TABS: { id: Tab; label: string; description: string }[] = [
   },
   {
     id: "inbox",
-    label: "받은 연락 요청 (시뮬레이션)",
-    description: "전문가 화면에서 도착하는 연락 요청을 시뮬레이션으로 확인합니다.",
+    label: "받은 연락 요청",
+    description: "전문가 시점에서 도착한 연락 요청을 확인합니다.",
   },
 ];
 
@@ -93,9 +89,9 @@ export default function MyDashboardPage() {
       />
 
       <div className="mt-6 rounded-lg border border-navy-100 bg-[#f7f9fc] p-4 text-xs leading-relaxed text-navy-600">
-        ※ 본 페이지의 활동 내역은 사용자 본인 브라우저(localStorage)에만 저장되어
-        시뮬레이션 됩니다. Assign은 의뢰를 특정 전문가에게 매칭/추천하지 않으며,
-        연락처는 양 당사자가 명시적으로 동의한 단계에서만 공유됩니다.
+        ※ 본 페이지의 활동 내역은 사용자 본인 브라우저에 저장됩니다. Assign은
+        의뢰를 특정 전문가에게 매칭/추천하지 않으며, 연락처는 양 당사자가 명시적으로
+        동의한 단계에서만 공유됩니다.
       </div>
 
       {/* 탭 */}
@@ -238,27 +234,6 @@ function RequestsTab({
               >
                 의뢰 상세 / 제안 확인
               </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  const created = simulateIncomingProposals(r);
-                  // proposalCount 동기화
-                  updateMyRequest(r.id, {
-                    proposalCount: created.length,
-                    status:
-                      created.length > 0 && r.status === "게시됨"
-                        ? "제안받는중"
-                        : r.status,
-                  });
-                  onChanged(
-                    `${created.length}건의 제안이 도착했습니다. 의뢰 상세에서 확인하세요.`,
-                  );
-                }}
-                disabled={r.status === "마감"}
-                className="rounded-lg border border-navy-200 px-4 py-2 text-sm font-semibold text-navy-800 hover:border-navy-400 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                제안 확인 (시뮬레이션)
-              </button>
               {r.status !== "마감" && (
                 <button
                   type="button"
@@ -292,9 +267,8 @@ function ProposalsTab({
   proposals: StoredProposal[];
   requests: StoredRequest[];
 }) {
-  // 시뮬레이션 데이터 중 "내가 직접 보낸" 제안만 보여준다.
-  // expertId 가 SIM- 으로 시작하는 것은 시뮬레이션 풀이고,
-  // 사용자가 board/[id]에서 직접 보낸 제안은 expertId === "ME" 이다.
+  // 사용자가 board/[id] 에서 직접 보낸 제안은 expertId === "ME" 로 저장된다.
+  // 본 탭에서는 그 제안만 노출한다.
   const mine = proposals.filter((p) => p.expertId === "ME");
 
   if (mine.length === 0) {
@@ -391,8 +365,6 @@ function ProposalsTab({
 // =====================================================================
 function ContactsTab({ contacts }: { contacts: StoredContactRequest[] }) {
   // 의뢰자 입장에서 "내가 디렉토리에서 보낸 연락 요청".
-  // 데모 단계에서는 같은 store 에 시뮬레이션 inbox 도 적재되어 있을 수 있어,
-  // 임의로 status === "요청대기" 외에 모두 노출.
   if (contacts.length === 0) {
     return (
       <EmptyState
@@ -461,7 +433,7 @@ function ContactsTab({ contacts }: { contacts: StoredContactRequest[] }) {
 }
 
 // =====================================================================
-// 탭 4 — 받은 연락 요청 (전문가 시뮬레이션 inbox)
+// 탭 4 — 받은 연락 요청 (전문가 시점의 inbox)
 // =====================================================================
 function InboxTab({
   contacts,
@@ -470,16 +442,15 @@ function InboxTab({
   contacts: StoredContactRequest[];
   onChanged: (message?: string) => void;
 }) {
-  // 본 데모 단계에서는 사용자가 보낸 연락 요청과 동일한 store 를
-  // 전문가 inbox 시각으로 사용하기 위해, status === "요청대기" 만 노출한다.
-  // 실제 운영 시에는 expert 측 store 가 분리된다.
+  // 사용자가 직접 보낸 연락 요청과 동일한 store 를 전문가 inbox 시각으로도 사용한다.
+  // status === "요청대기" 만 inbox 에 노출하며, 응답이 끝난 항목은 "내가 보낸 연락 요청" 탭에서 추적한다.
   const pending = contacts.filter((c) => c.status === "요청대기");
 
   if (contacts.length === 0) {
     return (
       <EmptyState
-        title="아직 시뮬레이션된 연락 요청이 없습니다"
-        description="전문가 디렉토리에서 임의의 전문가에게 연락 요청을 보내보세요. 전문가 시점의 inbox 가 시뮬레이션됩니다."
+        title="아직 받은 연락 요청이 없습니다"
+        description="전문가 디렉토리에 등록된 전문가에게 연락 요청이 도착하면 이 곳에서 응답할 수 있습니다."
         primaryHref="/experts"
         primaryLabel="전문가 디렉토리 둘러보기"
       />
@@ -510,7 +481,7 @@ function InboxTab({
             {c.clientCompany}
           </h3>
           <div className="mt-2 text-xs text-navy-500">
-            대상 전문가(시뮬레이션): {c.expertName} · {c.expertFirm}
+            대상 전문가: {c.expertName} · {c.expertFirm}
           </div>
           <div className="mt-4 rounded-lg border border-navy-100 bg-[#f7f9fc] p-3 text-sm text-navy-700">
             <p className="text-xs font-semibold text-navy-500">의뢰 컨텍스트</p>

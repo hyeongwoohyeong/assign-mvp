@@ -8,9 +8,8 @@ import {
 } from "@/lib/mockData";
 
 export default function AdminPage() {
-  // NOTE: This is an admin dashboard mock for the MVP.
-  // In production, this page should be guarded by authentication and the
-  // data below should come from the database (Supabase / Firestore / API).
+  // 운영 대시보드 — 신규 의뢰/제안/연락 요청 등 운영 신호를 한눈에 보는 페이지.
+  // 향후 인증 가드 + DB 연동 시 동일 인터페이스를 유지한다.
 
   const summaryCards = [
     { label: "신규 의뢰", value: ADMIN_SUMMARY.newRequests, hint: "이번 주" },
@@ -39,11 +38,11 @@ export default function AdminPage() {
         <SectionTitle
           eyebrow="Admin"
           title="운영 대시보드"
-          description="MVP 단계의 운영 현황 모니터링용 화면입니다. 실제 데이터 연동 전 임시 화면입니다."
+          description="신규 의뢰·전문가 등록·제안·연락 요청 처리 현황을 한눈에 확인합니다."
         />
         <span className="inline-flex w-max items-center gap-2 rounded-full border border-navy-200 bg-white px-3 py-1 text-xs font-medium text-navy-600">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          MVP Mock Data
+          운영자 전용
         </span>
       </div>
 
@@ -102,7 +101,7 @@ export default function AdminPage() {
               최근 의뢰 내역
             </h3>
             <p className="mt-0.5 text-xs text-navy-500">
-              최근 등록된 기업 의뢰 (Mock)
+              최근 등록된 기업 의뢰
             </p>
           </div>
           <button
@@ -157,7 +156,7 @@ export default function AdminPage() {
               최근 전문가 등록
             </h3>
             <p className="mt-0.5 text-xs text-navy-500">
-              최근 신청한 전문가 (Mock)
+              최근 등록을 신청한 전문가
             </p>
           </div>
           <button
@@ -224,7 +223,7 @@ export default function AdminPage() {
               관여하지 않습니다.
             </p>
           </div>
-          <span className="text-xs font-medium text-navy-400">Mock</span>
+          <span className="text-xs font-medium text-navy-400">최근 14일</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -280,7 +279,7 @@ export default function AdminPage() {
               표시하지 않습니다.
             </p>
           </div>
-          <span className="text-xs font-medium text-navy-400">Mock</span>
+          <span className="text-xs font-medium text-navy-400">최근 14일</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

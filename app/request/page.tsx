@@ -6,7 +6,6 @@ import SectionTitle from "@/components/SectionTitle";
 import { SERVICE_CATEGORIES } from "@/lib/mockData";
 import type { BudgetRange, ServiceCategory } from "@/lib/types";
 import { saveMyRequest, type StoredRequest } from "@/lib/storage";
-import { simulateIncomingProposals } from "@/lib/simulation";
 
 const BUDGET_RANGES: BudgetRange[] = [
   "300만원 이하",
@@ -119,7 +118,7 @@ export default function RequestPage() {
     const requestId = generateRequestId();
     setSubmittedId(requestId);
 
-    // STEP 1 — 사용자 본인 브라우저에 의뢰 영속화 (시뮬레이션 백엔드).
+    // STEP 1 — 사용자 본인 브라우저에 의뢰 영속화.
     // COMPLIANCE: 본 저장은 사용자 자신의 활동 기록을 위한 것일 뿐,
     //   운영자가 매칭/추천하기 위한 행위가 아니다.
     const today = new Date();
@@ -145,17 +144,10 @@ export default function RequestPage() {
     };
     saveMyRequest(stored);
 
-    // STEP 2 — 시뮬레이션 제안 1~2건 생성. 사용자가 다음 단계로 넘어갈 때
-    //   "도착한 제안"을 즉시 확인할 수 있도록 한다.
-    const created = simulateIncomingProposals(stored, { force: true });
-    if (created.length > 0) {
-      // 제안이 들어왔으니 상태/카운트 갱신.
-      saveMyRequest({
-        ...stored,
-        proposalCount: created.length,
-        status: "제안받는중",
-      });
-    }
+    // STEP 2 — 운영자(관리자)에게 신규 의뢰 신호 송출.
+    //   브라우저 콘솔에 ADMIN 로그를 남겨, 운영자가 페이지 새로고침 없이도
+    //   접수 사실을 빠르게 확인할 수 있게 한다.
+    console.log("ADMIN: 새로운 요청", { requestId, ...form });
 
     // STEP 3 — 운영자에게 알림 메일.
     try {

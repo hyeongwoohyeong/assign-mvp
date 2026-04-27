@@ -14,7 +14,7 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-type NotifyKind = "request" | "expert";
+type NotifyKind = "request" | "expert" | "proposal" | "contact";
 
 interface NotifyPayload {
   kind: NotifyKind;
@@ -107,11 +107,28 @@ function buildSubject(p: NotifyPayload): string {
     const idPrefix = id ? `[${id}] ` : "";
     return `${idPrefix}[Assign] 신규 용역 의뢰 — ${company}${service ? ` / ${service}` : ""}`;
   }
-  const id = (p.data.expertId as string) || "";
-  const name = (p.data.name as string) || "(이름 미입력)";
-  const firm = (p.data.firm as string) || "";
-  const idPrefix = id ? `[${id}] ` : "";
-  return `${idPrefix}[Assign] 신규 전문가 등록 — ${name}${firm ? ` / ${firm}` : ""}`;
+  if (p.kind === "expert") {
+    const id = (p.data.expertId as string) || "";
+    const name = (p.data.name as string) || "(이름 미입력)";
+    const firm = (p.data.firm as string) || "";
+    const idPrefix = id ? `[${id}] ` : "";
+    return `${idPrefix}[Assign] 신규 전문가 등록 — ${name}${firm ? ` / ${firm}` : ""}`;
+  }
+  if (p.kind === "proposal") {
+    const id = (p.data.proposalId as string) || "";
+    const reqId = (p.data.requestId as string) || "";
+    const reqTitle = (p.data.requestTitle as string) || "(의뢰 미상)";
+    const idPrefix = id ? `[${id}] ` : "";
+    const reqSuffix = reqId ? ` / ${reqId}` : "";
+    return `${idPrefix}[Assign] 신규 제안 — ${reqTitle}${reqSuffix}`;
+  }
+  // contact
+  const expertName = (p.data.expertName as string) || "(전문가 미상)";
+  const expertFirm = (p.data.expertFirm as string) || "";
+  const senderCompany = (p.data.senderCompany as string) || "";
+  const firmSuffix = expertFirm ? ` / ${expertFirm}` : "";
+  const fromSuffix = senderCompany ? ` ← ${senderCompany}` : "";
+  return `[Assign] 신규 연락 요청 — ${expertName}${firmSuffix}${fromSuffix}`;
 }
 
 function buildHtml(p: NotifyPayload): string {
@@ -128,7 +145,13 @@ function buildHtml(p: NotifyPayload): string {
     .join("");
 
   const heading =
-    p.kind === "request" ? "신규 용역 의뢰" : "신규 전문가 등록";
+    p.kind === "request"
+      ? "신규 용역 의뢰"
+      : p.kind === "expert"
+        ? "신규 전문가 등록"
+        : p.kind === "proposal"
+          ? "신규 제안 도착"
+          : "신규 연락 요청";
 
   return `
   <div style="font-family: -apple-system, BlinkMacSystemFont, 'Pretendard', sans-serif; max-width:640px; margin:0 auto; padding:24px;">
@@ -149,7 +172,14 @@ function buildText(p: NotifyPayload): string {
   const lines = Object.entries(p.data).map(
     ([key, value]) => `${LABELS[key] ?? key}: ${formatValue(value)}`,
   );
-  const heading = p.kind === "request" ? "신규 용역 의뢰" : "신규 전문가 등록";
+  const heading =
+    p.kind === "request"
+      ? "신규 용역 의뢰"
+      : p.kind === "expert"
+        ? "신규 전문가 등록"
+        : p.kind === "proposal"
+          ? "신규 제안 도착"
+          : "신규 연락 요청";
   return [`[Assign] ${heading}`, "", ...lines].join("\n");
 }
 
@@ -157,6 +187,7 @@ const LABELS: Record<string, string> = {
   // 식별자
   requestId: "의뢰번호",
   expertId: "등록번호",
+  proposalId: "제안번호",
   // request form
   company: "회사명",
   contactName: "담당자명",
@@ -178,6 +209,20 @@ const LABELS: Record<string, string> = {
   serviceArea: "담당 가능 지역",
   feeRange: "평균 보수 범위",
   intro: "프로필 소개",
+  // proposal payload
+  requestTitle: "의뢰 제목",
+  requestServiceType: "의뢰 서비스 유형",
+  requestBudget: "의뢰 예산",
+  message: "제안 메시지",
+  strengths: "본인 강점",
+  requestedContact: "연락 요청 동봉",
+  // contact request payload
+  expertName: "대상 전문가",
+  expertFirm: "전문가 소속",
+  senderCompany: "요청자 회사",
+  senderContactName: "요청자 담당자",
+  senderEmail: "요청자 이메일",
+  senderPhone: "요청자 연락처",
   // 공통
   source: "유입 경로",
 };

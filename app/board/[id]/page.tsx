@@ -16,17 +16,13 @@ import {
   updateMyProposal,
   type StoredProposal,
 } from "@/lib/storage";
-import {
-  revealClientContact,
-  simulateIncomingProposals,
-} from "@/lib/simulation";
+import { revealClientContact } from "@/lib/simulation";
 
 // COMPLIANCE NOTE — 의뢰 상세 페이지 설계 원칙:
 //   1) "운영자가 매칭한다"는 표현이 없도록 한다.
 //   2) "제안하기"는 전문가 본인의 자율 행위로 표현한다.
 //   3) 제안 메시지에는 연락처 자체가 포함되지 않으며, 의뢰자가
 //      "연락 허용" 을 누른 경우에만 연락처가 공유될 수 있다.
-//      (본 mock 단계에서는 alert/state 변경으로만 시뮬레이션한다.)
 //   4) "추천", "베스트 매치" 같은 정렬·강조 표현을 사용하지 않는다.
 
 export default function RequestDetailPage() {
@@ -134,24 +130,6 @@ export default function RequestDetailPage() {
               <button
                 type="button"
                 onClick={() => {
-                  const own = getMyRequest(request.id);
-                  if (!own) return;
-                  const created = simulateIncomingProposals(own, { force: true });
-                  setToast(
-                    created.length > 0
-                      ? `${created.length}건의 제안이 추가로 도착했습니다.`
-                      : "이미 충분한 제안이 도착했습니다.",
-                  );
-                }}
-                className="rounded-lg border border-navy-200 px-4 py-2.5 text-sm font-semibold text-navy-800 hover:border-navy-400"
-              >
-                제안 더 받아보기 (시뮬레이션)
-              </button>
-            )}
-            {isOwnRequest && request.status !== "마감" && (
-              <button
-                type="button"
-                onClick={() => {
                   closeMyRequest(request.id);
                   setToast("의뢰를 마감 처리했습니다.");
                 }}
@@ -246,7 +224,7 @@ export default function RequestDetailPage() {
         )}
       </section>
 
-      {/* 제안 모달 (전문가 시점 — 사용자가 expert 역할을 시뮬레이션) */}
+      {/* 제안 모달 — 사용자가 전문가 시점에서 의뢰에 제안을 보내는 입력 화면 */}
       {proposalModalOpen && (
         <ProposalModal
           requestTitle={request.title}
@@ -254,11 +232,12 @@ export default function RequestDetailPage() {
           onSubmit={(payload) => {
             // STORAGE: 사용자가 직접 보낸 제안은 expertId === "ME" 로 저장된다.
             // /my 의 "내가 보낸 제안" 탭은 이 키로 필터링한다.
+            const proposalId = idHelpers.proposal();
             const newProposal: StoredProposal = {
-              id: idHelpers.proposal(),
+              id: proposalId,
               requestId: request.id,
               expertId: "ME",
-              expertName: "나(전문가 데모 계정)",
+              expertName: "나(전문가 본인 계정)",
               expertFirm: "본인 계정",
               expertSpecialties: [request.serviceType],
               message: payload.message,
@@ -271,10 +250,41 @@ export default function RequestDetailPage() {
               requestBudget: request.budget,
             };
             saveMyProposal(newProposal);
+
+            // 관리자 신호 — 운영자가 콘솔에서 신규 제안을 즉시 확인할 수 있게 한다.
+            console.log("ADMIN: 새로운 제안", {
+              proposalId,
+              requestId: request.id,
+              requestTitle: request.title,
+              requestServiceType: request.serviceType,
+              message: payload.message,
+              strengths: payload.strengths,
+              requestedContact: payload.requestedContact,
+            });
+
+            // 운영자에게 알림 메일.
+            void fetch("/api/notify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                kind: "proposal",
+                data: {
+                  proposalId,
+                  requestId: request.id,
+                  requestTitle: request.title,
+                  requestServiceType: request.serviceType,
+                  requestBudget: request.budget,
+                  message: payload.message,
+                  strengths: payload.strengths,
+                  requestedContact: payload.requestedContact,
+                },
+              }),
+            }).catch((err) => {
+              console.error("[board/proposal] notify error:", err);
+            });
+
             setProposalModalOpen(false);
-            setToast(
-              "제안이 전송되었습니다. 내 활동 페이지에서 응답을 추적할 수 있습니다.",
-            );
+            setToast("제안이 정상적으로 등록되었습니다.");
           }}
         />
       )}
@@ -407,7 +417,7 @@ function ProposalCard({
 
       {/*
         COMPLIANCE: 연락처는 status === "연락허용" 시점에만 노출 가능.
-        본 시뮬레이션에서는 storage 에 저장된 placeholder 가 reveal 된다.
+        본 단계에서는 storage 에 저장된 placeholder 가 reveal 된다.
       */}
       {isAllowed && stored.revealedClientContact ? (
         <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs leading-relaxed text-emerald-900">
@@ -513,7 +523,7 @@ function ProposalModal({
 
         {/*
           COMPLIANCE: 제안 단계에서는 연락처를 입력받지 않는다.
-          본 mock 에서도 의도적으로 이메일/전화 입력란을 두지 않는다.
+          의뢰자가 "연락 허용" 을 누른 경우에만 양측 연락처가 공유된다.
         */}
         <div className="mt-4 rounded-lg border border-navy-100 bg-[#f7f9fc] p-3 text-xs leading-relaxed text-navy-600">
           제안은 단순 메시지로만 전달됩니다. 연락처는 의뢰자가 "연락 허용"을

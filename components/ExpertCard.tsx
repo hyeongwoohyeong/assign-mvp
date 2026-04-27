@@ -94,21 +94,7 @@ export default function ExpertCard({ expert }: ExpertCardProps) {
         <ContactRequestModal
           expert={expert}
           onClose={() => setContactOpen(false)}
-          onSubmit={(payload) => {
-            // STORAGE: 연락 요청을 사용자 본인의 활동 기록에 저장한다.
-            // 전문가가 "수락" 하면 /my 대시보드 inbox 탭에서 placeholder 연락처가 reveal 된다.
-            const stored: StoredContactRequest = {
-              id: ids.contactRequest(),
-              expertId: expert.id,
-              expertName: expert.name,
-              expertFirm: expert.firm,
-              expertSpecialties: expert.specialties,
-              clientCompany: payload.company,
-              clientContext: payload.context,
-              status: "요청대기",
-              requestedAt: new Date().toISOString(),
-            };
-            saveMyContactRequest(stored);
+          onCompleted={() => {
             setContactOpen(false);
             setToast(
               `${expert.name} 전문가에게 연락 요청을 보냈습니다. "내 활동"에서 응답을 확인할 수 있습니다.`,
@@ -136,17 +122,30 @@ export default function ExpertCard({ expert }: ExpertCardProps) {
   );
 }
 
+// 연락 요청은 3단계로 구성된다.
+//   STEP 1 (form)        — 의뢰자 측 정보 + 문의 컨텍스트 입력
+//   STEP 2 (submitted)   — "연락 요청이 정상적으로 전달되었습니다" 즉시 피드백
+//   STEP 3 (delivered)   — "담당자에게 요청이 전달되었습니다. 빠른 시일 내에 연락이
+//                          이루어질 수 있습니다." 최종 안내
+type ContactStep = "form" | "submitted" | "delivered";
+
 function ContactRequestModal({
   expert,
   onClose,
-  onSubmit,
+  onCompleted,
 }: {
   expert: Expert;
   onClose: () => void;
-  onSubmit: (payload: { company: string; context: string }) => void;
+  onCompleted: () => void;
 }) {
+  const [step, setStep] = useState<ContactStep>("form");
   const [company, setCompany] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [context, setContext] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -155,6 +154,70 @@ function ContactRequestModal({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
+
+  async function handleSubmit() {
+    if (submitting) return;
+    setSubmitting(true);
+    setErrorMsg(null);
+
+    const requestId = ids.contactRequest();
+    const stored: StoredContactRequest = {
+      id: requestId,
+      expertId: expert.id,
+      expertName: expert.name,
+      expertFirm: expert.firm,
+      expertSpecialties: expert.specialties,
+      clientCompany: company,
+      clientContext: context,
+      status: "요청대기",
+      requestedAt: new Date().toISOString(),
+    };
+    saveMyContactRequest(stored);
+
+    // 관리자 신호 — 운영자가 콘솔에서 신규 연락 요청을 즉시 확인할 수 있게 한다.
+    console.log("ADMIN: 연락 요청", {
+      requestId,
+      expertId: expert.id,
+      expertName: expert.name,
+      expertFirm: expert.firm,
+      senderCompany: company,
+      senderContactName: contactName,
+      senderEmail: email,
+      senderPhone: phone,
+      context,
+    });
+
+    // 운영자에게 알림 메일.
+    try {
+      const res = await fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind: "contact",
+          data: {
+            requestId,
+            expertName: expert.name,
+            expertFirm: expert.firm,
+            specialties: expert.specialties,
+            senderCompany: company,
+            senderContactName: contactName,
+            senderEmail: email,
+            senderPhone: phone,
+            description: context,
+          },
+        }),
+      });
+      if (!res.ok) {
+        console.error("[contact] notify failed:", await res.text());
+      }
+    } catch (err) {
+      console.error("[contact] notify error:", err);
+    } finally {
+      setSubmitting(false);
+    }
+
+    setStep("submitted");
+  }
 
   return (
     <div
@@ -168,82 +231,214 @@ function ContactRequestModal({
         role="dialog"
         aria-modal="true"
       >
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-xs font-medium text-navy-500">연락 요청 보내기</p>
-            <h3 className="mt-1 text-lg font-bold text-navy-900">
-              {expert.name} <span className="text-sm font-medium text-navy-500">· {expert.firm}</span>
+        {step === "form" && (
+          <>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium text-navy-500">연락 요청 보내기</p>
+                <h3 className="mt-1 text-lg font-bold text-navy-900">
+                  {expert.name}{" "}
+                  <span className="text-sm font-medium text-navy-500">
+                    · {expert.firm}
+                  </span>
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-md px-2 py-1 text-sm text-navy-600 hover:bg-navy-50"
+              >
+                닫기
+              </button>
+            </div>
+
+            {/*
+              COMPLIANCE 안내문 — 연락 요청은 전문가의 수락 이후에만 연락처가
+              공유된다는 점을 명시한다.
+            */}
+            <div className="mt-4 rounded-lg border border-navy-100 bg-[#f7f9fc] p-3 text-xs leading-relaxed text-navy-600">
+              전문가가 연락 요청을{" "}
+              <strong className="font-semibold text-navy-900">수락</strong>한 경우에만
+              양측 이메일이 서로에게 공유됩니다. 수락 전에는 어떠한 연락처도 공유되지
+              않으며, Assign은 계약을 중개하지 않습니다.
+            </div>
+
+            <form
+              className="mt-4 space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleSubmit();
+              }}
+            >
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="label-base" htmlFor="contact-company">
+                    회사명
+                  </label>
+                  <input
+                    id="contact-company"
+                    required
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    placeholder="예) 주식회사 어사인"
+                    className="input-base"
+                  />
+                </div>
+                <div>
+                  <label className="label-base" htmlFor="contact-name">
+                    담당자명
+                  </label>
+                  <input
+                    id="contact-name"
+                    required
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    placeholder="예) 홍길동"
+                    className="input-base"
+                  />
+                </div>
+                <div>
+                  <label className="label-base" htmlFor="contact-email">
+                    이메일
+                  </label>
+                  <input
+                    id="contact-email"
+                    required
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="company@example.com"
+                    className="input-base"
+                  />
+                </div>
+                <div>
+                  <label className="label-base" htmlFor="contact-phone">
+                    연락처
+                  </label>
+                  <input
+                    id="contact-phone"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="010-0000-0000"
+                    className="input-base"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="label-base" htmlFor="contact-context">
+                  어떤 일로 연락을 원하시나요?
+                </label>
+                <textarea
+                  id="contact-context"
+                  required
+                  rows={4}
+                  value={context}
+                  onChange={(e) => setContext(e.target.value)}
+                  placeholder="문의하시는 서비스 영역, 일정, 대략적인 규모 등을 적어주세요."
+                  className="input-base"
+                />
+              </div>
+
+              {errorMsg && (
+                <p className="text-xs text-rose-600">{errorMsg}</p>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-lg border border-navy-200 px-4 py-2 text-sm font-semibold text-navy-700 hover:border-navy-400"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800 disabled:cursor-not-allowed disabled:bg-navy-300"
+                >
+                  {submitting ? "전달 중..." : "연락 요청 보내기"}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
+
+        {step === "submitted" && (
+          <div className="py-4 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-6 w-6 text-white"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h3 className="mt-5 text-lg font-bold text-navy-900">
+              연락 요청이 정상적으로 전달되었습니다.
             </h3>
+            <p className="mt-3 text-sm leading-relaxed text-navy-600">
+              {expert.name} 전문가에게 요청을 전달했습니다.
+            </p>
+            <div className="mt-6 flex justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setStep("delivered")}
+                className="rounded-lg bg-navy-900 px-5 py-2 text-sm font-semibold text-white hover:bg-navy-800"
+              >
+                다음
+              </button>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md px-2 py-1 text-sm text-navy-600 hover:bg-navy-50"
-          >
-            닫기
-          </button>
-        </div>
+        )}
 
-        {/*
-          COMPLIANCE 안내문 — 연락 요청은 전문가의 수락 이후에만 연락처가
-          공유된다는 점을 명시한다.
-        */}
-        <div className="mt-4 rounded-lg border border-navy-100 bg-[#f7f9fc] p-3 text-xs leading-relaxed text-navy-600">
-          전문가가 연락 요청을 <strong className="font-semibold text-navy-900">수락</strong>한
-          경우에만 양측 이메일이 서로에게 공유됩니다. 수락 전에는 어떠한 연락처도
-          공유되지 않으며, Assign은 계약을 중개하지 않습니다.
-        </div>
-
-        <form
-          className="mt-4 space-y-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            onSubmit({ company, context });
-          }}
-        >
-          <div>
-            <label className="label-base" htmlFor="contact-company">
-              회사명 또는 의뢰자 식별
-            </label>
-            <input
-              id="contact-company"
-              required
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              placeholder="예) 주식회사 어사인"
-              className="input-base"
-            />
+        {step === "delivered" && (
+          <div className="py-4 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-navy-900">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-6 w-6 text-white"
+              >
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+            </div>
+            <h3 className="mt-5 text-lg font-bold text-navy-900">
+              담당자에게 요청이 전달되었습니다.
+            </h3>
+            <p className="mt-3 text-sm leading-relaxed text-navy-600">
+              빠른 시일 내에 연락이 이루어질 수 있습니다.
+              <br />
+              "내 활동" 페이지에서 진행 상태를 확인하실 수 있습니다.
+            </p>
+            <div className="mt-6 flex justify-center gap-2">
+              <Link
+                href="/my"
+                className="rounded-lg border border-navy-200 px-5 py-2 text-sm font-semibold text-navy-800 hover:border-navy-400"
+              >
+                내 활동 페이지로
+              </Link>
+              <button
+                type="button"
+                onClick={onCompleted}
+                className="rounded-lg bg-navy-900 px-5 py-2 text-sm font-semibold text-white hover:bg-navy-800"
+              >
+                확인
+              </button>
+            </div>
           </div>
-          <div>
-            <label className="label-base" htmlFor="contact-context">
-              어떤 일로 연락을 원하시나요?
-            </label>
-            <textarea
-              id="contact-context"
-              required
-              rows={4}
-              value={context}
-              onChange={(e) => setContext(e.target.value)}
-              placeholder="문의하시는 서비스 영역, 일정, 대략적인 규모 등을 적어주세요."
-              className="input-base"
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-navy-200 px-4 py-2 text-sm font-semibold text-navy-700 hover:border-navy-400"
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800"
-            >
-              연락 요청 보내기
-            </button>
-          </div>
-        </form>
+        )}
       </div>
     </div>
   );
