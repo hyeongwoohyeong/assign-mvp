@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import SectionTitle from "@/components/SectionTitle";
 import { MOCK_PUBLIC_REQUESTS, SERVICE_CATEGORIES } from "@/lib/mockData";
-import type { ServiceCategory } from "@/lib/types";
+import type { PublicRequest, ServiceCategory } from "@/lib/types";
+import { listMyRequests, subscribe } from "@/lib/storage";
 
 // COMPLIANCE NOTE:
 // 공개 의뢰 보드는 "정보 게시" 페이지이다.
@@ -19,10 +20,25 @@ export default function BoardPage() {
     "전체",
   );
   const [query, setQuery] = useState("");
+  // localStorage 의 사용자 본인 의뢰를 board 에 합쳐서 노출한다.
+  // SSR 단계에서 hydration mismatch 를 막기 위해 마운트 후에만 채운다.
+  const [myRequests, setMyRequests] = useState<PublicRequest[]>([]);
+
+  useEffect(() => {
+    const sync = () => setMyRequests(listMyRequests());
+    sync();
+    return subscribe(sync);
+  }, []);
+
+  // 동일 ID 의 의뢰는 사용자 본인 데이터(최신)를 우선한다.
+  const allRequests = useMemo<PublicRequest[]>(() => {
+    const ids = new Set(myRequests.map((r) => r.id));
+    return [...myRequests, ...MOCK_PUBLIC_REQUESTS.filter((r) => !ids.has(r.id))];
+  }, [myRequests]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return MOCK_PUBLIC_REQUESTS.filter((r) => {
+    return allRequests.filter((r) => {
       const matchCategory = filter === "전체" ? true : r.serviceType === filter;
       const matchStatus = statusFilter === "전체" ? true : r.status === statusFilter;
       const matchQuery =
@@ -33,7 +49,7 @@ export default function BoardPage() {
             r.companyDisplay.toLowerCase().includes(q);
       return matchCategory && matchStatus && matchQuery;
     });
-  }, [filter, statusFilter, query]);
+  }, [filter, statusFilter, query, allRequests]);
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-16 lg:px-8 lg:py-20">
@@ -182,21 +198,29 @@ export default function BoardPage() {
 
       {filtered.length === 0 && (
         <div className="mt-12 rounded-xl border border-dashed border-navy-200 bg-white p-12 text-center">
-          {MOCK_PUBLIC_REQUESTS.length === 0 ? (
+          {allRequests.length === 0 ? (
             <>
               <p className="text-base font-semibold text-navy-900">
                 업데이트 예정
               </p>
               <p className="mt-2 text-sm text-navy-500">
-                현재 게시판에 공개된 의뢰가 없습니다. 곧 새로운 의뢰가 등록될
-                예정이며, 등록 즉시 본 페이지에 노출됩니다.
+                현재 게시판에 공개된 의뢰가 없습니다. 의뢰를 직접 등록하시면 본
+                페이지에 즉시 노출되며, 도착하는 제안도 같이 추적할 수 있습니다.
               </p>
-              <Link
-                href="/request"
-                className="mt-5 inline-flex items-center gap-1 rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800"
-              >
-                의뢰 등록하기 →
-              </Link>
+              <div className="mt-5 flex flex-col items-center justify-center gap-2 sm:flex-row">
+                <Link
+                  href="/request"
+                  className="inline-flex items-center gap-1 rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800"
+                >
+                  의뢰 등록하기 →
+                </Link>
+                <Link
+                  href="/experts"
+                  className="inline-flex items-center gap-1 rounded-lg border border-navy-200 px-4 py-2 text-sm font-semibold text-navy-800 hover:border-navy-400"
+                >
+                  전문가 디렉토리 보기
+                </Link>
+              </div>
             </>
           ) : (
             <p className="text-sm text-navy-500">

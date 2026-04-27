@@ -5,6 +5,8 @@ import Link from "next/link";
 import SectionTitle from "@/components/SectionTitle";
 import { SERVICE_CATEGORIES } from "@/lib/mockData";
 import type { BudgetRange, ServiceCategory } from "@/lib/types";
+import { saveMyRequest, type StoredRequest } from "@/lib/storage";
+import { simulateIncomingProposals } from "@/lib/simulation";
 
 const BUDGET_RANGES: BudgetRange[] = [
   "300만원 이하",
@@ -117,9 +119,45 @@ export default function RequestPage() {
     const requestId = generateRequestId();
     setSubmittedId(requestId);
 
-    // 운영자에게 알림 메일을 보내기 위해 /api/notify 로 폼 데이터를 전송한다.
-    // 메일 전송이 실패해도 사용자에겐 정상 접수로 안내하고,
-    // 콘솔 / 서버 로그로 추적할 수 있도록 한다.
+    // STEP 1 — 사용자 본인 브라우저에 의뢰 영속화 (시뮬레이션 백엔드).
+    // COMPLIANCE: 본 저장은 사용자 자신의 활동 기록을 위한 것일 뿐,
+    //   운영자가 매칭/추천하기 위한 행위가 아니다.
+    const today = new Date();
+    const postedAt = today.toISOString().slice(0, 10);
+    const titleFromForm =
+      form.description.trim().split("\n")[0]?.slice(0, 60) ||
+      `${form.serviceType || "전문서비스"} 의뢰`;
+    const stored: StoredRequest = {
+      id: requestId,
+      title: titleFromForm,
+      serviceType: (form.serviceType || "기타") as ServiceCategory,
+      budget: (form.budget || "300만원 이하") as BudgetRange,
+      timeline: form.startDate || "협의 가능",
+      description: form.description,
+      status: "게시됨",
+      postedAt,
+      proposalCount: 0,
+      companyDisplay: form.confidential
+        ? `${form.serviceType || "전문서비스"} 의뢰 기업`
+        : form.company,
+      isAnonymous: form.confidential,
+      ownerCompany: form.company,
+    };
+    saveMyRequest(stored);
+
+    // STEP 2 — 시뮬레이션 제안 1~2건 생성. 사용자가 다음 단계로 넘어갈 때
+    //   "도착한 제안"을 즉시 확인할 수 있도록 한다.
+    const created = simulateIncomingProposals(stored, { force: true });
+    if (created.length > 0) {
+      // 제안이 들어왔으니 상태/카운트 갱신.
+      saveMyRequest({
+        ...stored,
+        proposalCount: created.length,
+        status: "제안받는중",
+      });
+    }
+
+    // STEP 3 — 운영자에게 알림 메일.
     try {
       const res = await fetch("/api/notify", {
         method: "POST",
@@ -170,32 +208,66 @@ export default function RequestPage() {
             </div>
           )}
           <p className="mt-5 text-sm leading-relaxed text-navy-600">
-            등록하신 의뢰 정보가 전문가 풀에 공유됩니다.
+            등록하신 의뢰가 게시판에 공개되었습니다.
             <br />
-            관심 있는 전문가가 직접 검토 후, 영업일 기준 1~2일 내에 제안 또는 연락이
-            도착할 수 있습니다.
+            관심 있는 전문가가 직접 검토 후 자율적으로 제안할 수 있습니다.
           </p>
+
+          {/* STEP-BY-STEP — 다음 단계 안내. 사용자가 막히는 곳이 없도록 명확한 진입점을 제공한다. */}
+          <div className="mt-6 rounded-xl border border-navy-100 bg-[#f7f9fc] p-5 text-left">
+            <p className="text-xs font-semibold uppercase tracking-wide text-navy-500">
+              다음 단계
+            </p>
+            <ol className="mt-3 space-y-2 text-sm text-navy-700">
+              <li className="flex gap-2">
+                <span className="font-semibold text-navy-900">1.</span>
+                <span>
+                  의뢰 상세에서 도착한 제안을 확인합니다. 제안마다 "연락 허용" 또는
+                  "제안 종료"를 선택할 수 있습니다.
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-semibold text-navy-900">2.</span>
+                <span>
+                  "내 활동" 페이지에서 의뢰 상태와 도착한 제안을 한 곳에서 추적할 수
+                  있습니다.
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-semibold text-navy-900">3.</span>
+                <span>
+                  "연락 허용"을 누르면 양측 연락처가 공유되어 직접 협의를 시작할 수
+                  있습니다. 그 전에는 어떠한 연락처도 공유되지 않습니다.
+                </span>
+              </li>
+            </ol>
+          </div>
+
           <p className="mt-4 rounded-lg bg-[#f7f9fc] px-4 py-3 text-xs leading-relaxed text-navy-600">
             ※ Assign은 특정 전문가를 추천하거나 계약을 중개하지 않습니다. 전문가
             제안 검토와 계약 여부, 조건은 모두 의뢰자께서 직접 결정하시며, 플랫폼은
             계약의 당사자가 아닙니다.
           </p>
-          <p className="mt-3 text-xs text-navy-500">
-            의뢰 관련 문의는 <strong>contact@getassign.kr</strong> 또는 접수 안내
-            메일에 회신해주시면 같은 의뢰로 이어집니다.
-          </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            {submittedId && (
+              <Link
+                href={`/board/${submittedId}`}
+                className="inline-flex items-center justify-center rounded-lg bg-navy-900 px-6 py-3 text-sm font-semibold text-white hover:bg-navy-800"
+              >
+                도착한 제안 확인하기 →
+              </Link>
+            )}
             <Link
-              href="/"
-              className="inline-flex items-center justify-center rounded-lg bg-navy-900 px-6 py-3 text-sm font-semibold text-white hover:bg-navy-800"
+              href="/my"
+              className="inline-flex items-center justify-center rounded-lg border border-navy-200 px-6 py-3 text-sm font-semibold text-navy-900 hover:border-navy-400"
             >
-              홈으로 돌아가기
+              내 활동 페이지로
             </Link>
             <Link
               href="/experts"
               className="inline-flex items-center justify-center rounded-lg border border-navy-200 px-6 py-3 text-sm font-semibold text-navy-900 hover:border-navy-400"
             >
-              전문가 디렉토리 보기
+              전문가 디렉토리
             </Link>
           </div>
         </div>

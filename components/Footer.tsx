@@ -42,6 +42,11 @@ export default function Footer() {
                   전문가 등록
                 </Link>
               </li>
+              <li>
+                <Link href="/my" className="hover:text-navy-900">
+                  내 활동
+                </Link>
+              </li>
             </ul>
           </div>
 

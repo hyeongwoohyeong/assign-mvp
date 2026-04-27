@@ -14,6 +14,7 @@ const NAV_LINKS = [
 const SUB_LINKS = [
   { href: "/board", label: "의뢰 게시판" },
   { href: "/experts", label: "전문가 디렉터리" },
+  { href: "/my", label: "내 활동" },
   { href: "/admin", label: "운영 대시보드" },
 ];
 

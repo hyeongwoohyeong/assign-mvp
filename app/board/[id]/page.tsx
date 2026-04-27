@@ -4,7 +4,22 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { notFound, useParams } from "next/navigation";
 import { MOCK_PROPOSALS, MOCK_PUBLIC_REQUESTS } from "@/lib/mockData";
-import type { Proposal } from "@/lib/types";
+import type { Proposal, PublicRequest } from "@/lib/types";
+import {
+  closeMyRequest,
+  getMyRequest,
+  ids as idHelpers,
+  listMyProposals,
+  listMyRequests,
+  saveMyProposal,
+  subscribe,
+  updateMyProposal,
+  type StoredProposal,
+} from "@/lib/storage";
+import {
+  revealClientContact,
+  simulateIncomingProposals,
+} from "@/lib/simulation";
 
 // COMPLIANCE NOTE — 의뢰 상세 페이지 설계 원칙:
 //   1) "운영자가 매칭한다"는 표현이 없도록 한다.
@@ -18,17 +33,41 @@ export default function RequestDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id;
 
-  const request = useMemo(
-    () => MOCK_PUBLIC_REQUESTS.find((r) => r.id === id),
-    [id],
-  );
-
-  // 제안은 mock 데이터를 초기 상태로 받아오되, "연락 허용" 토글은 로컬 상태로 시뮬레이션.
-  const [proposals, setProposals] = useState<Proposal[]>(() =>
-    MOCK_PROPOSALS.filter((p) => p.requestId === id),
-  );
+  // 본 페이지는 (1) 사용자 본인이 등록해 storage 에 영속화한 의뢰,
+  // (2) MOCK_PUBLIC_REQUESTS 에 들어 있는 데모 의뢰 둘 다 상세 보기를 지원한다.
+  // 본인 의뢰는 storage 의 변경을 따라가야 하므로 useState + subscribe 로 관리.
+  const [hydrated, setHydrated] = useState(false);
+  const [storedRequest, setStoredRequest] = useState<PublicRequest | undefined>();
+  const [proposals, setProposals] = useState<Proposal[]>([]);
   const [proposalModalOpen, setProposalModalOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  // 본인 의뢰인지 여부 (storage 에 있으면 본인 의뢰).
+  const isOwnRequest = useMemo(
+    () => listMyRequests().some((r) => r.id === id),
+    // hydrated 가 변할 때 한 번만 다시 읽어도 충분하다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [id, hydrated],
+  );
+
+  useEffect(() => {
+    if (!id) return;
+    function refresh() {
+      const own = getMyRequest(id!);
+      if (own) {
+        setStoredRequest(own);
+        setProposals(listMyProposals().filter((p) => p.requestId === id));
+      } else {
+        const mock = MOCK_PUBLIC_REQUESTS.find((r) => r.id === id);
+        setStoredRequest(mock);
+        // 데모 mock 의뢰는 storage 에 없는 정적 mock 제안만 노출.
+        setProposals(MOCK_PROPOSALS.filter((p) => p.requestId === id));
+      }
+    }
+    refresh();
+    setHydrated(true);
+    return subscribe(refresh);
+  }, [id]);
 
   useEffect(() => {
     if (!toast) return;
@@ -36,9 +75,19 @@ export default function RequestDetailPage() {
     return () => window.clearTimeout(t);
   }, [toast]);
 
-  if (!request) {
+  if (!hydrated) {
+    return (
+      <div className="mx-auto max-w-4xl px-6 py-20 lg:px-8 text-center text-sm text-navy-500">
+        불러오는 중...
+      </div>
+    );
+  }
+
+  if (!storedRequest) {
     notFound();
   }
+
+  const request = storedRequest;
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-12 lg:px-8 lg:py-16">
@@ -80,15 +129,54 @@ export default function RequestDetailPage() {
             ※ 본 의뢰는 게시판에 공개된 정보입니다. Assign은 제안을 강제하지
             않으며, 전문가가 자율 판단으로 제안 여부를 결정합니다.
           </p>
-          <button
-            type="button"
-            onClick={() => setProposalModalOpen(true)}
-            disabled={request.status === "마감"}
-            className="rounded-lg bg-navy-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 disabled:cursor-not-allowed disabled:bg-navy-300"
-          >
-            {request.status === "마감" ? "마감된 의뢰" : "제안하기"}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            {isOwnRequest && request.status !== "마감" && (
+              <button
+                type="button"
+                onClick={() => {
+                  const own = getMyRequest(request.id);
+                  if (!own) return;
+                  const created = simulateIncomingProposals(own, { force: true });
+                  setToast(
+                    created.length > 0
+                      ? `${created.length}건의 제안이 추가로 도착했습니다.`
+                      : "이미 충분한 제안이 도착했습니다.",
+                  );
+                }}
+                className="rounded-lg border border-navy-200 px-4 py-2.5 text-sm font-semibold text-navy-800 hover:border-navy-400"
+              >
+                제안 더 받아보기 (시뮬레이션)
+              </button>
+            )}
+            {isOwnRequest && request.status !== "마감" && (
+              <button
+                type="button"
+                onClick={() => {
+                  closeMyRequest(request.id);
+                  setToast("의뢰를 마감 처리했습니다.");
+                }}
+                className="rounded-lg border border-navy-200 px-4 py-2.5 text-sm font-semibold text-navy-600 hover:border-rose-300 hover:text-rose-700"
+              >
+                의뢰 마감
+              </button>
+            )}
+            {!isOwnRequest && (
+              <button
+                type="button"
+                onClick={() => setProposalModalOpen(true)}
+                disabled={request.status === "마감"}
+                className="rounded-lg bg-navy-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 disabled:cursor-not-allowed disabled:bg-navy-300"
+              >
+                {request.status === "마감" ? "마감된 의뢰" : "제안하기"}
+              </button>
+            )}
+          </div>
         </div>
+        {isOwnRequest && (
+          <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+            본 의뢰는 사용자 본인이 등록한 의뢰입니다. 제안 카드의 "연락 허용" 또는 "제안 종료"를 직접 선택하실 수 있습니다.
+          </p>
+        )}
       </div>
 
       {/* 제안 목록 */}
@@ -115,25 +203,41 @@ export default function RequestDetailPage() {
               <ProposalCard
                 key={p.id}
                 proposal={p}
+                isOwnRequest={isOwnRequest}
                 onAllowContact={() => {
                   // COMPLIANCE: 의뢰자가 "연락 허용" 을 누른 경우에만
-                  // 상태가 '연락허용' 으로 바뀌고, 양측 연락처가 공유될 수
-                  // 있다는 안내를 띄운다. 실제 연락처 노출은 백엔드 단계에서 처리.
-                  setProposals((prev) =>
-                    prev.map((x) =>
-                      x.id === p.id ? { ...x, status: "연락허용" } : x,
-                    ),
-                  );
+                  // 상태가 '연락허용' 으로 바뀐다. 본인 의뢰일 때만 storage 에
+                  // 영속화하여 /my "내가 보낸 제안" 화면에서도 reveal 된 상태로 보인다.
+                  if (isOwnRequest) {
+                    const own = getMyRequest(request.id);
+                    if (own) {
+                      updateMyProposal(p.id, {
+                        status: "연락허용",
+                        revealedClientContact: revealClientContact(own),
+                      });
+                    }
+                  } else {
+                    // 데모 mock 의뢰는 메모리상에서만 변경.
+                    setProposals((prev) =>
+                      prev.map((x) =>
+                        x.id === p.id ? { ...x, status: "연락허용" } : x,
+                      ),
+                    );
+                  }
                   setToast(
                     `${p.expertName} 전문가에게 연락 허용을 보냈습니다. 양측에 연락처가 공유됩니다.`,
                   );
                 }}
                 onClose={() => {
-                  setProposals((prev) =>
-                    prev.map((x) =>
-                      x.id === p.id ? { ...x, status: "종료" } : x,
-                    ),
-                  );
+                  if (isOwnRequest) {
+                    updateMyProposal(p.id, { status: "종료" });
+                  } else {
+                    setProposals((prev) =>
+                      prev.map((x) =>
+                        x.id === p.id ? { ...x, status: "종료" } : x,
+                      ),
+                    );
+                  }
                   setToast(`${p.expertName} 전문가의 제안을 종료 처리했습니다.`);
                 }}
               />
@@ -142,15 +246,34 @@ export default function RequestDetailPage() {
         )}
       </section>
 
-      {/* 제안 모달 (전문가 시점 mock) */}
+      {/* 제안 모달 (전문가 시점 — 사용자가 expert 역할을 시뮬레이션) */}
       {proposalModalOpen && (
         <ProposalModal
           requestTitle={request.title}
           onClose={() => setProposalModalOpen(false)}
-          onSubmit={() => {
+          onSubmit={(payload) => {
+            // STORAGE: 사용자가 직접 보낸 제안은 expertId === "ME" 로 저장된다.
+            // /my 의 "내가 보낸 제안" 탭은 이 키로 필터링한다.
+            const newProposal: StoredProposal = {
+              id: idHelpers.proposal(),
+              requestId: request.id,
+              expertId: "ME",
+              expertName: "나(전문가 데모 계정)",
+              expertFirm: "본인 계정",
+              expertSpecialties: [request.serviceType],
+              message: payload.message,
+              strengths: payload.strengths,
+              requestedContact: payload.requestedContact,
+              status: "제안전달",
+              sentAt: new Date().toISOString(),
+              requestTitle: request.title,
+              requestServiceType: request.serviceType,
+              requestBudget: request.budget,
+            };
+            saveMyProposal(newProposal);
             setProposalModalOpen(false);
             setToast(
-              "제안이 전송되었습니다. 의뢰자가 확인 후 연락 허용 여부를 결정합니다.",
+              "제안이 전송되었습니다. 내 활동 페이지에서 응답을 추적할 수 있습니다.",
             );
           }}
         />
@@ -214,15 +337,20 @@ function ProposalStatusBadge({ status }: { status: string }) {
 
 function ProposalCard({
   proposal,
+  isOwnRequest,
   onAllowContact,
   onClose,
 }: {
   proposal: Proposal;
+  isOwnRequest: boolean;
   onAllowContact: () => void;
   onClose: () => void;
 }) {
   const isClosed = proposal.status === "종료";
   const isAllowed = proposal.status === "연락허용";
+  // StoredProposal 인 경우에는 reveal 된 의뢰자 정보를 직접 노출.
+  // (Proposal 기본 타입에는 없는 필드라 캐스팅하여 옵셔널 접근.)
+  const stored = proposal as Partial<StoredProposal>;
 
   return (
     <div
@@ -279,16 +407,26 @@ function ProposalCard({
 
       {/*
         COMPLIANCE: 연락처는 status === "연락허용" 시점에만 노출 가능.
-        실제 백엔드 연동 전이라, 본 mock 에서는 "공유 예정" 안내문만 노출.
+        본 시뮬레이션에서는 storage 에 저장된 placeholder 가 reveal 된다.
       */}
-      {isAllowed && (
+      {isAllowed && stored.revealedClientContact ? (
+        <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs leading-relaxed text-emerald-900">
+          <strong className="font-semibold">연락 허용이 완료되었습니다.</strong>
+          <div className="mt-2 grid gap-1">
+            <span>회사명: {stored.revealedClientContact.company}</span>
+            <span>담당자: {stored.revealedClientContact.contactName}</span>
+            <span>이메일: {stored.revealedClientContact.email}</span>
+            <span>전화: {stored.revealedClientContact.phone}</span>
+          </div>
+        </div>
+      ) : isAllowed ? (
         <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs leading-relaxed text-emerald-800">
           연락 허용이 완료되었습니다. 백엔드 연결 시 양측 이메일/전화가 이 영역에
           노출되며, 이전 단계에서는 어떠한 연락처도 공유되지 않습니다.
         </div>
-      )}
+      ) : null}
 
-      {!isClosed && !isAllowed && (
+      {!isClosed && !isAllowed && isOwnRequest && (
         <div className="mt-5 flex flex-wrap gap-2 border-t border-navy-100 pt-4">
           <button
             type="button"
@@ -309,6 +447,13 @@ function ProposalCard({
           </p>
         </div>
       )}
+      {!isClosed && !isAllowed && !isOwnRequest && (
+        <div className="mt-5 flex items-center justify-end gap-2 border-t border-navy-100 pt-4">
+          <p className="text-[11px] text-navy-500">
+            "연락 허용/제안 종료"는 의뢰자만 결정할 수 있습니다.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -320,7 +465,11 @@ function ProposalModal({
 }: {
   requestTitle: string;
   onClose: () => void;
-  onSubmit: () => void;
+  onSubmit: (payload: {
+    message: string;
+    strengths: string;
+    requestedContact: boolean;
+  }) => void;
 }) {
   const [message, setMessage] = useState("");
   const [strengths, setStrengths] = useState("");
@@ -375,7 +524,7 @@ function ProposalModal({
           className="mt-4 space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
-            onSubmit();
+            onSubmit({ message, strengths, requestedContact });
           }}
         >
           <div>

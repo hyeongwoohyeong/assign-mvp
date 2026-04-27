@@ -203,17 +203,60 @@ export default function ExpertRegisterPage() {
             <br />
             영업일 기준 2~3일 내에 등록 결과를 안내드리겠습니다.
           </p>
-          <p className="mt-3 text-xs text-navy-500">
+
+          {/* STEP-BY-STEP — 전문가가 등록 직후에 무엇을 더 할 수 있는지 명확히 안내. */}
+          <div className="mt-6 rounded-xl border border-navy-100 bg-[#f7f9fc] p-5 text-left">
+            <p className="text-xs font-semibold uppercase tracking-wide text-navy-500">
+              다음 단계
+            </p>
+            <ol className="mt-3 space-y-2 text-sm text-navy-700">
+              <li className="flex gap-2">
+                <span className="font-semibold text-navy-900">1.</span>
+                <span>
+                  공개된 의뢰 게시판에서 본인 전문분야와 맞는 의뢰를 직접 확인하고
+                  자율적으로 제안할 수 있습니다.
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-semibold text-navy-900">2.</span>
+                <span>
+                  보낸 제안과 도착하는 연락 요청은 "내 활동" 페이지에서 한 곳에서
+                  추적할 수 있습니다.
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="font-semibold text-navy-900">3.</span>
+                <span>
+                  의뢰자가 "연락 허용" 또는 "수락"을 누른 경우에만 양측 연락처가
+                  공유됩니다. 그 전에는 어떠한 연락처도 공유되지 않습니다.
+                </span>
+              </li>
+            </ol>
+          </div>
+
+          <p className="mt-4 text-xs text-navy-500">
             게시 완료 시 등록 메일로 안내드리며, 등록된 의뢰 중 전문분야에
             부합하는 건이 있을 때 같은 메일로 안내됩니다. 의뢰 검토와 제안 여부는
             전문가께서 직접 결정하시면 됩니다.
           </p>
-          <div className="mt-8">
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href="/"
+              href="/board"
               className="inline-flex items-center justify-center rounded-lg bg-navy-900 px-6 py-3 text-sm font-semibold text-white hover:bg-navy-800"
             >
-              홈으로 돌아가기
+              공개 의뢰 게시판으로 →
+            </Link>
+            <Link
+              href="/my"
+              className="inline-flex items-center justify-center rounded-lg border border-navy-200 px-6 py-3 text-sm font-semibold text-navy-900 hover:border-navy-400"
+            >
+              내 활동 페이지로
+            </Link>
+            <Link
+              href="/experts"
+              className="inline-flex items-center justify-center rounded-lg border border-navy-200 px-6 py-3 text-sm font-semibold text-navy-900 hover:border-navy-400"
+            >
+              디렉토리 보기
             </Link>
           </div>
         </div>

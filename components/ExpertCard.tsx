@@ -1,7 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Expert } from "@/lib/types";
+import {
+  ids,
+  saveMyContactRequest,
+  type StoredContactRequest,
+} from "@/lib/storage";
 
 interface ExpertCardProps {
   expert: Expert;
@@ -88,10 +94,24 @@ export default function ExpertCard({ expert }: ExpertCardProps) {
         <ContactRequestModal
           expert={expert}
           onClose={() => setContactOpen(false)}
-          onSubmit={() => {
+          onSubmit={(payload) => {
+            // STORAGE: 연락 요청을 사용자 본인의 활동 기록에 저장한다.
+            // 전문가가 "수락" 하면 /my 대시보드 inbox 탭에서 placeholder 연락처가 reveal 된다.
+            const stored: StoredContactRequest = {
+              id: ids.contactRequest(),
+              expertId: expert.id,
+              expertName: expert.name,
+              expertFirm: expert.firm,
+              expertSpecialties: expert.specialties,
+              clientCompany: payload.company,
+              clientContext: payload.context,
+              status: "요청대기",
+              requestedAt: new Date().toISOString(),
+            };
+            saveMyContactRequest(stored);
             setContactOpen(false);
             setToast(
-              `${expert.name} 전문가에게 연락 요청을 보냈습니다. 전문가가 수락하면 연락처가 공유됩니다.`,
+              `${expert.name} 전문가에게 연락 요청을 보냈습니다. "내 활동"에서 응답을 확인할 수 있습니다.`,
             );
           }}
         />
@@ -99,11 +119,17 @@ export default function ExpertCard({ expert }: ExpertCardProps) {
 
       {toast && (
         <div
-          className="pointer-events-none fixed bottom-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-lg bg-navy-900 px-4 py-3 text-center text-sm font-medium text-white shadow-card"
+          className="pointer-events-none fixed bottom-5 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center justify-between gap-3 rounded-lg bg-navy-900 px-4 py-3 text-sm font-medium text-white shadow-card"
           role="status"
           aria-live="polite"
         >
-          {toast}
+          <span className="flex-1 text-left">{toast}</span>
+          <Link
+            href="/my"
+            className="shrink-0 rounded-md bg-white/15 px-2.5 py-1 text-xs font-semibold text-white hover:bg-white/25"
+          >
+            내 활동 →
+          </Link>
         </div>
       )}
     </div>
@@ -117,7 +143,7 @@ function ContactRequestModal({
 }: {
   expert: Expert;
   onClose: () => void;
-  onSubmit: () => void;
+  onSubmit: (payload: { company: string; context: string }) => void;
 }) {
   const [company, setCompany] = useState("");
   const [context, setContext] = useState("");
@@ -172,7 +198,7 @@ function ContactRequestModal({
           className="mt-4 space-y-4"
           onSubmit={(e) => {
             e.preventDefault();
-            onSubmit();
+            onSubmit({ company, context });
           }}
         >
           <div>
