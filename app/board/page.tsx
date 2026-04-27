@@ -182,9 +182,27 @@ export default function BoardPage() {
 
       {filtered.length === 0 && (
         <div className="mt-12 rounded-xl border border-dashed border-navy-200 bg-white p-12 text-center">
-          <p className="text-sm text-navy-500">
-            조건에 맞는 의뢰가 없습니다. 필터를 변경해보세요.
-          </p>
+          {MOCK_PUBLIC_REQUESTS.length === 0 ? (
+            <>
+              <p className="text-base font-semibold text-navy-900">
+                업데이트 예정
+              </p>
+              <p className="mt-2 text-sm text-navy-500">
+                현재 게시판에 공개된 의뢰가 없습니다. 곧 새로운 의뢰가 등록될
+                예정이며, 등록 즉시 본 페이지에 노출됩니다.
+              </p>
+              <Link
+                href="/request"
+                className="mt-5 inline-flex items-center gap-1 rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800"
+              >
+                의뢰 등록하기 →
+              </Link>
+            </>
+          ) : (
+            <p className="text-sm text-navy-500">
+              조건에 맞는 의뢰가 없습니다. 필터를 변경해보세요.
+            </p>
+          )}
         </div>
       )}
     </div>

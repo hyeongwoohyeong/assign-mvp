@@ -431,17 +431,23 @@ export default function HomePage() {
               </Link>
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
-              {MOCK_EXPERTS.slice(0, 3).map((expert) => (
-                <div key={expert.id} className="rounded-lg border border-navy-100 bg-white p-4">
-                  <p className="text-sm font-semibold text-navy-900">
-                    {expert.name} · {expert.firm}
-                  </p>
-                  <p className="mt-1 text-xs text-navy-600">{expert.experienceSummary}</p>
-                  <p className="mt-2 text-xs text-navy-500">
-                    {expert.specialties.slice(0, 2).join(" · ")}
-                  </p>
-                </div>
-              ))}
+              {MOCK_EXPERTS.length === 0 ? (
+                <p className="md:col-span-3 text-sm text-navy-500">
+                  등록된 전문가는 디렉토리에서 확인하실 수 있습니다.
+                </p>
+              ) : (
+                MOCK_EXPERTS.slice(0, 3).map((expert) => (
+                  <div key={expert.id} className="rounded-lg border border-navy-100 bg-white p-4">
+                    <p className="text-sm font-semibold text-navy-900">
+                      {expert.name} · {expert.firm}
+                    </p>
+                    <p className="mt-1 text-xs text-navy-600">{expert.experienceSummary}</p>
+                    <p className="mt-2 text-xs text-navy-500">
+                      {expert.specialties.slice(0, 2).join(" · ")}
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
