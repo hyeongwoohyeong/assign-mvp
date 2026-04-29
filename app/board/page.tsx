@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import SectionTitle from "@/components/SectionTitle";
 import { MOCK_PUBLIC_REQUESTS, SERVICE_CATEGORIES } from "@/lib/mockData";
-import type { PublicRequest, ServiceCategory } from "@/lib/types";
-import { listMyRequests, subscribe } from "@/lib/storage";
+import type { ServiceCategory } from "@/lib/types";
 
 // COMPLIANCE NOTE:
 // 공개 의뢰 보드는 "정보 게시" 페이지이다.
@@ -13,6 +12,14 @@ import { listMyRequests, subscribe } from "@/lib/storage";
 // - 전문가는 본인 판단에 따라 자율적으로 제안할 수 있다.
 // - 의뢰자는 어떤 제안에 대해 연락 허용 여부를 직접 결정한다.
 // 따라서 본 페이지에서는 "추천", "매칭", "연결" 같은 표현을 사용하지 않는다.
+//
+// 공개 정책:
+// - 본 페이지에는 운영자가 검토 후 직접 등록한 공개 의뢰(MOCK_PUBLIC_REQUESTS)만
+//   노출한다.
+// - 사용자가 /request 폼으로 등록한 의뢰는 본인 브라우저(localStorage)에 저장되며,
+//   "내 활동(/my)" 에서 본인이 확인할 수 있다. 다른 방문자에게는 노출되지 않는다.
+// - 나중에 진짜 백엔드(Supabase 등) 연결 시, 본 컴포넌트의 데이터 소스를
+//   MOCK_PUBLIC_REQUESTS 에서 서버 쿼리로 교체하면 자동으로 모두에게 보이게 된다.
 
 export default function BoardPage() {
   const [filter, setFilter] = useState<ServiceCategory | "전체">("전체");
@@ -20,21 +27,10 @@ export default function BoardPage() {
     "전체",
   );
   const [query, setQuery] = useState("");
-  // localStorage 의 사용자 본인 의뢰를 board 에 합쳐서 노출한다.
-  // SSR 단계에서 hydration mismatch 를 막기 위해 마운트 후에만 채운다.
-  const [myRequests, setMyRequests] = useState<PublicRequest[]>([]);
 
-  useEffect(() => {
-    const sync = () => setMyRequests(listMyRequests());
-    sync();
-    return subscribe(sync);
-  }, []);
-
-  // 동일 ID 의 의뢰는 사용자 본인 데이터(최신)를 우선한다.
-  const allRequests = useMemo<PublicRequest[]>(() => {
-    const ids = new Set(myRequests.map((r) => r.id));
-    return [...myRequests, ...MOCK_PUBLIC_REQUESTS.filter((r) => !ids.has(r.id))];
-  }, [myRequests]);
+  // 게시판에는 운영자가 큐레이션한 공개 의뢰만 노출한다.
+  // localStorage 에 있는 본인 의뢰는 /my 에서만 보이며, /board 에는 합치지 않는다.
+  const allRequests = MOCK_PUBLIC_REQUESTS;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -56,7 +52,7 @@ export default function BoardPage() {
       <SectionTitle
         eyebrow="의뢰 게시판"
         title="공개된 의뢰를 직접 확인하고 자율적으로 제안하세요"
-        description="기업이 등록한 의뢰가 그대로 게시됩니다. 관심 있는 의뢰에 본인 판단으로 제안할 수 있습니다."
+        description="운영자 검토 후 게시되는 공개 의뢰만 본 게시판에 노출됩니다. 관심 있는 의뢰에 본인 판단으로 제안할 수 있습니다."
       />
 
       {/*
@@ -65,11 +61,13 @@ export default function BoardPage() {
       <div className="mt-6 rounded-lg border border-navy-100 bg-[#f7f9fc] p-4 text-xs leading-relaxed text-navy-600">
         <p>
           <strong className="font-semibold text-navy-900">
-            본 게시판은 의뢰자가 등록한 정보를 그대로 공개하는 게시 공간입니다.
+            본 게시판은 운영자의 검토를 거쳐 공개된 의뢰만 게시됩니다.
           </strong>{" "}
-          Assign은 특정 전문가에게 의뢰를 전달하거나 계약을 중개하지 않으며,
-          전문가는 자율적으로 제안 여부를 판단합니다. 의뢰자의 회사명·담당자·연락처
-          등 비공개 정보는 노출되지 않습니다.
+          /의뢰 등록 폼으로 제출된 의뢰는 본인이 직접 확인할 수 있도록 "내 활동"
+          페이지에 보관되며, 운영자 검토 후 본 게시판에 게시됩니다. Assign은
+          특정 전문가에게 의뢰를 전달하거나 계약을 중개하지 않으며, 전문가는 자율적으로
+          제안 여부를 판단합니다. 의뢰자의 담당자·연락처 등 비공개 정보는 노출되지
+          않습니다.
         </p>
       </div>
 
@@ -222,11 +220,12 @@ export default function BoardPage() {
           {allRequests.length === 0 ? (
             <>
               <p className="text-base font-semibold text-navy-900">
-                업데이트 예정
+                현재 게시 중인 공개 의뢰가 없습니다
               </p>
               <p className="mt-2 text-sm text-navy-500">
-                현재 게시판에 공개된 의뢰가 없습니다. 의뢰를 직접 등록하시면 본
-                페이지에 즉시 노출되며, 도착하는 제안도 같이 추적할 수 있습니다.
+                새로운 의뢰는 운영자 검토 후 본 게시판에 게시됩니다. 의뢰가
+                있으시다면 등록 폼으로 접수해 주세요. 본인이 등록한 의뢰는 "내
+                활동" 페이지에서 직접 확인하실 수 있습니다.
               </p>
               <div className="mt-5 flex flex-col items-center justify-center gap-2 sm:flex-row">
                 <Link
@@ -234,6 +233,12 @@ export default function BoardPage() {
                   className="inline-flex items-center gap-1 rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800"
                 >
                   의뢰 등록하기 →
+                </Link>
+                <Link
+                  href="/my"
+                  className="inline-flex items-center gap-1 rounded-lg border border-navy-200 px-4 py-2 text-sm font-semibold text-navy-800 hover:border-navy-400"
+                >
+                  내 활동 보기
                 </Link>
                 <Link
                   href="/experts"

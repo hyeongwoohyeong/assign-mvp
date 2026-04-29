@@ -200,9 +200,10 @@ export default function RequestPage() {
             </div>
           )}
           <p className="mt-5 text-sm leading-relaxed text-navy-600">
-            등록하신 의뢰가 게시판에 공개되었습니다.
+            등록하신 의뢰가 운영자에게 전달되었습니다.
             <br />
-            관심 있는 전문가가 직접 검토 후 자율적으로 제안할 수 있습니다.
+            운영자 검토 후 의뢰 게시판에 공개되며, 그때부터 전문가가 자율적으로
+            제안할 수 있습니다.
           </p>
 
           {/* STEP-BY-STEP — 다음 단계 안내. 사용자가 막히는 곳이 없도록 명확한 진입점을 제공한다. */}
@@ -214,15 +215,15 @@ export default function RequestPage() {
               <li className="flex gap-2">
                 <span className="font-semibold text-navy-900">1.</span>
                 <span>
-                  의뢰 상세에서 도착한 제안을 확인합니다. 제안마다 "연락 허용" 또는
-                  "제안 종료"를 선택할 수 있습니다.
+                  운영자가 등록 내용을 확인 후 의뢰 게시판에 공개 게시합니다. 게시 전에는
+                  본인 외 다른 방문자에게는 노출되지 않습니다.
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="font-semibold text-navy-900">2.</span>
                 <span>
-                  "내 활동" 페이지에서 의뢰 상태와 도착한 제안을 한 곳에서 추적할 수
-                  있습니다.
+                  "내 활동" 페이지에서 본인이 등록한 의뢰와 도착한 제안을 한 곳에서
+                  추적할 수 있습니다.
                 </span>
               </li>
               <li className="flex gap-2">
@@ -241,20 +242,20 @@ export default function RequestPage() {
             계약의 당사자가 아닙니다.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              href="/my"
+              className="inline-flex items-center justify-center rounded-lg bg-navy-900 px-6 py-3 text-sm font-semibold text-white hover:bg-navy-800"
+            >
+              내 활동 페이지로 →
+            </Link>
             {submittedId && (
               <Link
                 href={`/board/${submittedId}`}
-                className="inline-flex items-center justify-center rounded-lg bg-navy-900 px-6 py-3 text-sm font-semibold text-white hover:bg-navy-800"
+                className="inline-flex items-center justify-center rounded-lg border border-navy-200 px-6 py-3 text-sm font-semibold text-navy-900 hover:border-navy-400"
               >
-                도착한 제안 확인하기 →
+                내 의뢰 상세 보기
               </Link>
             )}
-            <Link
-              href="/my"
-              className="inline-flex items-center justify-center rounded-lg border border-navy-200 px-6 py-3 text-sm font-semibold text-navy-900 hover:border-navy-400"
-            >
-              내 활동 페이지로
-            </Link>
             <Link
               href="/experts"
               className="inline-flex items-center justify-center rounded-lg border border-navy-200 px-6 py-3 text-sm font-semibold text-navy-900 hover:border-navy-400"

@@ -11,13 +11,14 @@ import {
   listMyRequests,
   subscribe,
   updateMyContactRequest,
+  updateMyProposal,
   type StoredContactRequest,
   type StoredProposal,
   type StoredRequest,
 } from "@/lib/storage";
-// COMPLIANCE: revealExpertContact 는 인적 동의 후 placeholder 연락처를 노출하기 위한
+// COMPLIANCE: reveal* 는 인적 동의 후 placeholder 연락처를 노출하기 위한
 //   순수 함수로, 자동 매칭/추천 로직과 무관하다.
-import { revealExpertContact } from "@/lib/simulation";
+import { revealClientContact, revealExpertContact } from "@/lib/simulation";
 
 // COMPLIANCE NOTE — 내 활동 대시보드 설계 원칙:
 //   1) 본 페이지는 사용자 본인의 브라우저에 저장된 활동만 노출한다.
@@ -175,7 +176,7 @@ export default function MyDashboardPage() {
 }
 
 // =====================================================================
-// 탭 1 — 내가 등록한 의뢰
+// 탭 1 — 내가 등록한 의뢰 (도착한 제안 인라인 노출)
 // =====================================================================
 function RequestsTab({
   requests,
@@ -186,6 +187,9 @@ function RequestsTab({
   proposals: StoredProposal[];
   onChanged: (message?: string) => void;
 }) {
+  // 어떤 의뢰의 제안 목록을 펼쳤는지 기억한다 (의뢰 ID 단위 토글).
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
   if (requests.length === 0) {
     return (
       <EmptyState
@@ -202,7 +206,8 @@ function RequestsTab({
   return (
     <div className="grid gap-4">
       {requests.map((r) => {
-        const myProposals = proposals.filter((p) => p.requestId === r.id);
+        const incoming = proposals.filter((p) => p.requestId === r.id);
+        const isExpanded = !!expanded[r.id];
         return (
           <div
             key={r.id}
@@ -225,15 +230,24 @@ function RequestsTab({
               <span>예산: {r.budget}</span>
               <span>일정: {r.timeline}</span>
               <span>등록: {r.postedAt}</span>
-              <span>도착 제안: {r.proposalCount}건</span>
+              <span>도착 제안: {incoming.length}건</span>
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2 border-t border-navy-100 pt-4">
-              <Link
-                href={`/board/${r.id}`}
+              <button
+                type="button"
+                onClick={() =>
+                  setExpanded((prev) => ({ ...prev, [r.id]: !prev[r.id] }))
+                }
                 className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800"
               >
-                의뢰 상세 / 제안 확인
+                도착한 제안 {incoming.length}건 {isExpanded ? "닫기" : "보기"}
+              </button>
+              <Link
+                href={`/board/${r.id}`}
+                className="rounded-lg border border-navy-200 px-4 py-2 text-sm font-semibold text-navy-800 hover:border-navy-400"
+              >
+                의뢰 상세 보기
               </Link>
               {r.status !== "마감" && (
                 <button
@@ -265,13 +279,171 @@ function RequestsTab({
               >
                 의뢰 삭제
               </button>
-              <p className="ml-auto self-center text-[11px] text-navy-500">
-                내가 받은 제안: {myProposals.length}건
-              </p>
             </div>
+
+            {isExpanded && (
+              <IncomingProposalsList
+                request={r}
+                proposals={incoming}
+                onChanged={onChanged}
+              />
+            )}
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// 의뢰 카드 안에 도착한 제안 목록을 인라인으로 보여 준다.
+// 의뢰자 본인만 볼 수 있는 영역이다 — /board/[id] 에서는 제안 목록을 노출하지
+// 않으며, 본 컴포넌트가 유일한 노출 지점이다.
+function IncomingProposalsList({
+  request,
+  proposals,
+  onChanged,
+}: {
+  request: StoredRequest;
+  proposals: StoredProposal[];
+  onChanged: (message?: string) => void;
+}) {
+  if (proposals.length === 0) {
+    return (
+      <div className="mt-4 rounded-lg border border-dashed border-navy-200 bg-[#fafbfd] p-6 text-center text-sm text-navy-500">
+        아직 도착한 제안이 없습니다. 운영자 검토 후 본 의뢰가 게시판에 게시되면
+        전문가들이 자율적으로 제안할 수 있습니다.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 space-y-3 rounded-lg border border-navy-100 bg-[#fafbfd] p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-navy-500">
+        도착한 제안 — 의뢰자 본인만 확인할 수 있는 영역입니다
+      </p>
+      {proposals.map((p) => (
+        <IncomingProposalCard
+          key={p.id}
+          request={request}
+          proposal={p}
+          onAllow={() => {
+            updateMyProposal(p.id, {
+              status: "연락허용",
+              revealedClientContact: revealClientContact(request),
+            });
+            onChanged(
+              `${p.expertName} 전문가에게 연락 허용을 보냈습니다. 양측에 연락처가 공유됩니다.`,
+            );
+          }}
+          onClose={() => {
+            updateMyProposal(p.id, { status: "종료" });
+            onChanged(`${p.expertName} 전문가의 제안을 종료 처리했습니다.`);
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function IncomingProposalCard({
+  proposal,
+  onAllow,
+  onClose,
+}: {
+  request: StoredRequest;
+  proposal: StoredProposal;
+  onAllow: () => void;
+  onClose: () => void;
+}) {
+  const isClosed = proposal.status === "종료";
+  const isAllowed = proposal.status === "연락허용";
+
+  return (
+    <div
+      className={`rounded-lg border p-4 transition ${
+        isClosed
+          ? "border-navy-100 bg-white opacity-70"
+          : "border-navy-100 bg-white"
+      }`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold text-navy-900">
+              {proposal.expertName}
+            </p>
+            <span className="text-xs text-navy-500">· {proposal.expertFirm}</span>
+            <ProposalStatusBadge status={proposal.status} />
+            {proposal.requestedContact && !isAllowed && !isClosed && (
+              <span className="rounded bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-200">
+                연락 요청 동봉
+              </span>
+            )}
+          </div>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {proposal.expertSpecialties.map((s) => (
+              <span
+                key={s}
+                className="rounded bg-navy-50 px-2 py-0.5 text-[11px] text-navy-600"
+              >
+                {s}
+              </span>
+            ))}
+          </div>
+        </div>
+        <span className="text-xs text-navy-400">
+          {new Date(proposal.sentAt).toLocaleString("ko-KR")}
+        </span>
+      </div>
+
+      <div className="mt-3 grid gap-2 text-sm">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-500">
+            제안 메시지
+          </p>
+          <p className="mt-1 whitespace-pre-line leading-relaxed text-navy-800">
+            {proposal.message}
+          </p>
+        </div>
+        {proposal.strengths && (
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-500">
+              본인 강점
+            </p>
+            <p className="mt-1 text-navy-800">{proposal.strengths}</p>
+          </div>
+        )}
+      </div>
+
+      {isAllowed && (
+        <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs leading-relaxed text-emerald-900">
+          <strong className="font-semibold">연락 허용이 완료되었습니다.</strong>{" "}
+          양측에 연락처가 공유되었으며, 본 전문가는 "내가 보낸 제안" 화면에서
+          의뢰자 정보를 확인할 수 있습니다.
+        </div>
+      )}
+
+      {!isClosed && !isAllowed && (
+        <div className="mt-4 flex flex-wrap gap-2 border-t border-navy-100 pt-3">
+          <button
+            type="button"
+            onClick={onAllow}
+            className="rounded-lg bg-navy-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-navy-800"
+          >
+            연락 허용
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-navy-200 px-3 py-1.5 text-xs font-semibold text-navy-700 transition hover:border-navy-400"
+          >
+            제안 종료
+          </button>
+          <p className="ml-auto self-center text-[11px] text-navy-500">
+            연락 허용 전에는 어떠한 연락처도 공유되지 않습니다.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

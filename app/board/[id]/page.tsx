@@ -3,20 +3,18 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { MOCK_PROPOSALS, MOCK_PUBLIC_REQUESTS } from "@/lib/mockData";
-import type { Proposal, PublicRequest } from "@/lib/types";
+import { MOCK_PUBLIC_REQUESTS } from "@/lib/mockData";
+import type { PublicRequest } from "@/lib/types";
 import {
   closeMyRequest,
   getMyRequest,
   ids as idHelpers,
-  listMyProposals,
   listMyRequests,
   saveMyProposal,
   subscribe,
-  updateMyProposal,
+  updateMyRequest,
   type StoredProposal,
 } from "@/lib/storage";
-import { revealClientContact } from "@/lib/simulation";
 
 // COMPLIANCE NOTE — 의뢰 상세 페이지 설계 원칙:
 //   1) "운영자가 매칭한다"는 표현이 없도록 한다.
@@ -39,7 +37,6 @@ export default function RequestDetailPage() {
   // 본인 의뢰는 storage 의 변경을 따라가야 하므로 useState + subscribe 로 관리.
   const [hydrated, setHydrated] = useState(false);
   const [storedRequest, setStoredRequest] = useState<PublicRequest | undefined>();
-  const [proposals, setProposals] = useState<Proposal[]>([]);
   const [proposalModalOpen, setProposalModalOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -57,12 +54,9 @@ export default function RequestDetailPage() {
       const own = getMyRequest(id!);
       if (own) {
         setStoredRequest(own);
-        setProposals(listMyProposals().filter((p) => p.requestId === id));
       } else {
         const mock = MOCK_PUBLIC_REQUESTS.find((r) => r.id === id);
         setStoredRequest(mock);
-        // 데모 mock 의뢰는 storage 에 없는 정적 mock 제안만 노출.
-        setProposals(MOCK_PROPOSALS.filter((p) => p.requestId === id));
       }
       // hydrated 는 데이터 set 직후에 true 로 바꾸어, 한 프레임이라도
       // (hydrated=true, storedRequest=undefined) 가 보이지 않도록 한다.
@@ -210,72 +204,33 @@ export default function RequestDetailPage() {
         )}
       </div>
 
-      {/* 제안 목록 */}
-      <section className="mt-10">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-navy-900">
-            도착한 제안 ({proposals.length})
-          </h2>
-          <p className="text-xs text-navy-500">
-            정렬 순서는 추천을 의미하지 않습니다.
-          </p>
-        </div>
-
-        {proposals.length === 0 ? (
-          <div className="mt-4 rounded-xl border border-dashed border-navy-200 bg-white p-10 text-center">
-            <p className="text-sm text-navy-500">
-              아직 도착한 제안이 없습니다. 전문가가 자율적으로 제안할 수 있도록
-              의뢰가 게시판에 공개되어 있습니다.
-            </p>
+      {/*
+        프라이버시 정책 — 도착한 제안은 본 페이지에서 전혀 노출되지 않는다.
+        - 전문가들끼리 누가 어떻게 제안했는지 서로 보지 않도록, 제안 목록은
+          의뢰자 본인의 "내 활동(/my)" 페이지에서만 확인할 수 있다.
+        - 의뢰자가 본인 의뢰일 때만 본 영역 아래에 안내 카드를 보여 준다.
+      */}
+      {isOwnRequest && (
+        <section className="mt-8 rounded-xl border border-navy-100 bg-[#f7f9fc] p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-navy-900">
+                내 의뢰에 도착한 제안 확인
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed text-navy-600">
+                본 의뢰에 도착한 제안 내역과 "연락 허용 / 제안 종료" 처리는
+                의뢰자 본인만 확인할 수 있도록 "내 활동" 페이지에서 관리합니다.
+              </p>
+            </div>
+            <Link
+              href="/my"
+              className="shrink-0 rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white hover:bg-navy-800"
+            >
+              내 활동에서 확인 →
+            </Link>
           </div>
-        ) : (
-          <div className="mt-4 space-y-4">
-            {proposals.map((p) => (
-              <ProposalCard
-                key={p.id}
-                proposal={p}
-                isOwnRequest={isOwnRequest}
-                onAllowContact={() => {
-                  // COMPLIANCE: 의뢰자가 "연락 허용" 을 누른 경우에만
-                  // 상태가 '연락허용' 으로 바뀐다. 본인 의뢰일 때만 storage 에
-                  // 영속화하여 /my "내가 보낸 제안" 화면에서도 reveal 된 상태로 보인다.
-                  if (isOwnRequest) {
-                    const own = getMyRequest(request.id);
-                    if (own) {
-                      updateMyProposal(p.id, {
-                        status: "연락허용",
-                        revealedClientContact: revealClientContact(own),
-                      });
-                    }
-                  } else {
-                    // 데모 mock 의뢰는 메모리상에서만 변경.
-                    setProposals((prev) =>
-                      prev.map((x) =>
-                        x.id === p.id ? { ...x, status: "연락허용" } : x,
-                      ),
-                    );
-                  }
-                  setToast(
-                    `${p.expertName} 전문가에게 연락 허용을 보냈습니다. 양측에 연락처가 공유됩니다.`,
-                  );
-                }}
-                onClose={() => {
-                  if (isOwnRequest) {
-                    updateMyProposal(p.id, { status: "종료" });
-                  } else {
-                    setProposals((prev) =>
-                      prev.map((x) =>
-                        x.id === p.id ? { ...x, status: "종료" } : x,
-                      ),
-                    );
-                  }
-                  setToast(`${p.expertName} 전문가의 제안을 종료 처리했습니다.`);
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+        </section>
+      )}
 
       {/* 제안 모달 — 사용자가 전문가 시점에서 의뢰에 제안을 보내는 입력 화면 */}
       {proposalModalOpen && (
@@ -303,6 +258,17 @@ export default function RequestDetailPage() {
               requestBudget: request.budget,
             };
             saveMyProposal(newProposal);
+
+            // 본인 의뢰라면 카운터를 함께 증가시켜 /my "내 의뢰" 카드에 즉시 반영한다.
+            if (isOwnRequest) {
+              const own = getMyRequest(request.id);
+              if (own) {
+                updateMyRequest(request.id, {
+                  proposalCount: (own.proposalCount ?? 0) + 1,
+                  status: own.status === "게시됨" ? "제안받는중" : own.status,
+                });
+              }
+            }
 
             // 관리자 신호 — 운영자가 콘솔에서 신규 제안을 즉시 확인할 수 있게 한다.
             console.log("ADMIN: 새로운 제안", {
@@ -378,146 +344,6 @@ function RequestStatusBadge({ status }: { status: string }) {
     >
       {status}
     </span>
-  );
-}
-
-function ProposalStatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    제안전달: "bg-blue-50 text-blue-700 ring-blue-200",
-    연락허용: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-    종료: "bg-navy-50 text-navy-500 ring-navy-200",
-  };
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${
-        styles[status] ?? ""
-      }`}
-    >
-      {status}
-    </span>
-  );
-}
-
-function ProposalCard({
-  proposal,
-  isOwnRequest,
-  onAllowContact,
-  onClose,
-}: {
-  proposal: Proposal;
-  isOwnRequest: boolean;
-  onAllowContact: () => void;
-  onClose: () => void;
-}) {
-  const isClosed = proposal.status === "종료";
-  const isAllowed = proposal.status === "연락허용";
-  // StoredProposal 인 경우에는 reveal 된 의뢰자 정보를 직접 노출.
-  // (Proposal 기본 타입에는 없는 필드라 캐스팅하여 옵셔널 접근.)
-  const stored = proposal as Partial<StoredProposal>;
-
-  return (
-    <div
-      className={`rounded-xl border p-5 transition ${
-        isClosed
-          ? "border-navy-100 bg-[#fafbfd] opacity-70"
-          : "border-navy-100 bg-white shadow-soft"
-      }`}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-base font-semibold text-navy-900">
-              {proposal.expertName}
-            </p>
-            <span className="text-xs text-navy-500">· {proposal.expertFirm}</span>
-            <ProposalStatusBadge status={proposal.status} />
-            {proposal.requestedContact && !isAllowed && !isClosed && (
-              <span className="rounded bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-200">
-                연락 요청 동봉
-              </span>
-            )}
-          </div>
-          <div className="mt-1 flex flex-wrap gap-1">
-            {proposal.expertSpecialties.map((s) => (
-              <span
-                key={s}
-                className="rounded bg-navy-50 px-2 py-0.5 text-[11px] text-navy-600"
-              >
-                {s}
-              </span>
-            ))}
-          </div>
-        </div>
-        <span className="text-xs text-navy-400">{proposal.sentAt}</span>
-      </div>
-
-      <div className="mt-4 space-y-3 text-sm">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-navy-500">
-            제안 메시지
-          </p>
-          <p className="mt-1 whitespace-pre-line leading-relaxed text-navy-800">
-            {proposal.message}
-          </p>
-        </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-navy-500">
-            본인 강점
-          </p>
-          <p className="mt-1 text-navy-800">{proposal.strengths}</p>
-        </div>
-      </div>
-
-      {/*
-        COMPLIANCE: 연락처는 status === "연락허용" 시점에만 노출 가능.
-        본 단계에서는 storage 에 저장된 placeholder 가 reveal 된다.
-      */}
-      {isAllowed && stored.revealedClientContact ? (
-        <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs leading-relaxed text-emerald-900">
-          <strong className="font-semibold">연락 허용이 완료되었습니다.</strong>
-          <div className="mt-2 grid gap-1">
-            <span>회사명: {stored.revealedClientContact.company}</span>
-            <span>담당자: {stored.revealedClientContact.contactName}</span>
-            <span>이메일: {stored.revealedClientContact.email}</span>
-            <span>전화: {stored.revealedClientContact.phone}</span>
-          </div>
-        </div>
-      ) : isAllowed ? (
-        <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs leading-relaxed text-emerald-800">
-          연락 허용이 완료되었습니다. 백엔드 연결 시 양측 이메일/전화가 이 영역에
-          노출되며, 이전 단계에서는 어떠한 연락처도 공유되지 않습니다.
-        </div>
-      ) : null}
-
-      {!isClosed && !isAllowed && isOwnRequest && (
-        <div className="mt-5 flex flex-wrap gap-2 border-t border-navy-100 pt-4">
-          <button
-            type="button"
-            onClick={onAllowContact}
-            className="rounded-lg bg-navy-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-navy-800"
-          >
-            연락 허용
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-navy-200 px-4 py-2 text-sm font-semibold text-navy-700 transition hover:border-navy-400"
-          >
-            제안 종료
-          </button>
-          <p className="ml-auto self-center text-[11px] text-navy-500">
-            연락 허용 전에는 어떠한 연락처도 공유되지 않습니다.
-          </p>
-        </div>
-      )}
-      {!isClosed && !isAllowed && !isOwnRequest && (
-        <div className="mt-5 flex items-center justify-end gap-2 border-t border-navy-100 pt-4">
-          <p className="text-[11px] text-navy-500">
-            "연락 허용/제안 종료"는 의뢰자만 결정할 수 있습니다.
-          </p>
-        </div>
-      )}
-    </div>
   );
 }
 
