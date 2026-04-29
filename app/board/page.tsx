@@ -154,10 +154,9 @@ export default function BoardPage() {
 
       <div className="mt-6 grid gap-4">
         {filtered.map((r) => (
-          <Link
+          <article
             key={r.id}
-            href={`/board/${r.id}`}
-            className="group block rounded-xl border border-navy-100 bg-white p-6 shadow-soft transition hover:border-navy-300 hover:shadow-card"
+            className="group rounded-xl border border-navy-100 bg-white p-6 shadow-soft transition hover:border-navy-300 hover:shadow-card"
           >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0 flex-1">
@@ -168,8 +167,13 @@ export default function BoardPage() {
                   </span>
                   <span className="text-xs text-navy-500">{r.id}</span>
                 </div>
-                <h3 className="mt-3 text-lg font-semibold text-navy-900 group-hover:text-navy-700">
-                  {r.title}
+                <h3 className="mt-3 text-lg font-semibold text-navy-900">
+                  <Link
+                    href={`/board/${r.id}`}
+                    className="hover:text-navy-700 hover:underline underline-offset-4"
+                  >
+                    {r.title}
+                  </Link>
                 </h3>
                 <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-navy-600">
                   {r.description}
@@ -182,17 +186,34 @@ export default function BoardPage() {
                 </div>
               </div>
 
-              <div className="shrink-0 text-right">
+              <div className="flex shrink-0 flex-col items-end gap-1 sm:items-end">
                 <p className="text-2xl font-bold text-navy-900">
                   {r.proposalCount}
                 </p>
                 <p className="text-xs text-navy-500">제안 도착</p>
-                <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-navy-700 group-hover:text-navy-900">
-                  상세 보기 →
-                </span>
               </div>
             </div>
-          </Link>
+
+            <div className="mt-5 flex flex-wrap items-center justify-end gap-2 border-t border-navy-100 pt-4">
+              <Link
+                href={`/board/${r.id}`}
+                className="inline-flex items-center justify-center rounded-lg border border-navy-200 px-4 py-2 text-sm font-semibold text-navy-800 transition hover:border-navy-400"
+              >
+                상세 보기
+              </Link>
+              <Link
+                href={`/board/${r.id}?action=propose`}
+                className={`inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition ${
+                  r.status === "마감"
+                    ? "cursor-not-allowed bg-navy-200 text-white pointer-events-none"
+                    : "bg-navy-900 text-white hover:bg-navy-800"
+                }`}
+                aria-disabled={r.status === "마감"}
+              >
+                {r.status === "마감" ? "마감된 의뢰" : "제안하기 →"}
+              </Link>
+            </div>
+          </article>
         ))}
       </div>
 

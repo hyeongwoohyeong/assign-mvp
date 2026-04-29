@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { MOCK_PROPOSALS, MOCK_PUBLIC_REQUESTS } from "@/lib/mockData";
 import type { Proposal, PublicRequest } from "@/lib/types";
 import {
@@ -30,6 +30,9 @@ export default function RequestDetailPage() {
   // useParams() 반환값이 string | string[] | undefined 일 수 있어 안전하게 좁힌다.
   const idRaw = params?.id;
   const id = Array.isArray(idRaw) ? idRaw[0] : idRaw;
+  const searchParams = useSearchParams();
+  // /board 카드의 "제안하기" 버튼이 ?action=propose 로 진입하면 자동으로 모달을 연다.
+  const wantsPropose = searchParams?.get("action") === "propose";
 
   // 본 페이지는 (1) 사용자 본인이 등록해 storage 에 영속화한 의뢰,
   // (2) MOCK_PUBLIC_REQUESTS 에 들어 있는 데모 의뢰 둘 다 상세 보기를 지원한다.
@@ -74,6 +77,17 @@ export default function RequestDetailPage() {
     const t = window.setTimeout(() => setToast(null), 2400);
     return () => window.clearTimeout(t);
   }, [toast]);
+
+  // 데이터 로드 + ?action=propose 가 있으면 자동으로 모달 오픈.
+  useEffect(() => {
+    if (!hydrated) return;
+    if (!storedRequest) return;
+    if (wantsPropose && storedRequest.status !== "마감") {
+      setProposalModalOpen(true);
+    }
+    // 한 번만 자동 오픈한다 — wantsPropose 가 true 일 때 hydrated 이후 한 번.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, wantsPropose]);
 
   if (!hydrated) {
     return (
@@ -178,21 +192,20 @@ export default function RequestDetailPage() {
                 의뢰 마감
               </button>
             )}
-            {!isOwnRequest && (
-              <button
-                type="button"
-                onClick={() => setProposalModalOpen(true)}
-                disabled={request.status === "마감"}
-                className="rounded-lg bg-navy-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 disabled:cursor-not-allowed disabled:bg-navy-300"
-              >
-                {request.status === "마감" ? "마감된 의뢰" : "제안하기"}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setProposalModalOpen(true)}
+              disabled={request.status === "마감"}
+              className="rounded-lg bg-navy-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 disabled:cursor-not-allowed disabled:bg-navy-300"
+            >
+              {request.status === "마감" ? "마감된 의뢰" : "제안하기"}
+            </button>
           </div>
         </div>
         {isOwnRequest && (
           <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
             본 의뢰는 사용자 본인이 등록한 의뢰입니다. 제안 카드의 "연락 허용" 또는 "제안 종료"를 직접 선택하실 수 있습니다.
+            본인 의뢰에 직접 제안을 등록할 수도 있으나(테스트 목적) 일반적으로는 다른 사용자의 의뢰에 제안하시는 것을 권장합니다.
           </p>
         )}
       </div>
