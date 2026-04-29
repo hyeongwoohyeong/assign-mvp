@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { notFound, useParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { MOCK_PROPOSALS, MOCK_PUBLIC_REQUESTS } from "@/lib/mockData";
 import type { Proposal, PublicRequest } from "@/lib/types";
 import {
@@ -27,7 +27,9 @@ import { revealClientContact } from "@/lib/simulation";
 
 export default function RequestDetailPage() {
   const params = useParams<{ id: string }>();
-  const id = params?.id;
+  // useParams() 반환값이 string | string[] | undefined 일 수 있어 안전하게 좁힌다.
+  const idRaw = params?.id;
+  const id = Array.isArray(idRaw) ? idRaw[0] : idRaw;
 
   // 본 페이지는 (1) 사용자 본인이 등록해 storage 에 영속화한 의뢰,
   // (2) MOCK_PUBLIC_REQUESTS 에 들어 있는 데모 의뢰 둘 다 상세 보기를 지원한다.
@@ -40,7 +42,7 @@ export default function RequestDetailPage() {
 
   // 본인 의뢰인지 여부 (storage 에 있으면 본인 의뢰).
   const isOwnRequest = useMemo(
-    () => listMyRequests().some((r) => r.id === id),
+    () => (id ? listMyRequests().some((r) => r.id === id) : false),
     // hydrated 가 변할 때 한 번만 다시 읽어도 충분하다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [id, hydrated],
@@ -59,9 +61,11 @@ export default function RequestDetailPage() {
         // 데모 mock 의뢰는 storage 에 없는 정적 mock 제안만 노출.
         setProposals(MOCK_PROPOSALS.filter((p) => p.requestId === id));
       }
+      // hydrated 는 데이터 set 직후에 true 로 바꾸어, 한 프레임이라도
+      // (hydrated=true, storedRequest=undefined) 가 보이지 않도록 한다.
+      setHydrated(true);
     }
     refresh();
-    setHydrated(true);
     return subscribe(refresh);
   }, [id]);
 
@@ -80,7 +84,43 @@ export default function RequestDetailPage() {
   }
 
   if (!storedRequest) {
-    notFound();
+    // 친절한 인라인 안내 — Next.js notFound() 강제 404 대신, 무엇이 잘못됐는지
+    // 알려주고 게시판으로 돌아갈 수 있는 진입점을 제공한다.
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-20 lg:px-8">
+        <div className="rounded-2xl border border-navy-100 bg-white p-10 text-center shadow-soft">
+          <h1 className="text-xl font-bold text-navy-900">
+            의뢰 정보를 불러올 수 없습니다
+          </h1>
+          <p className="mt-3 text-sm leading-relaxed text-navy-600">
+            요청하신 의뢰가 게시판이나 본인 활동 기록에서 확인되지 않습니다.
+            <br />
+            의뢰 ID:{" "}
+            <span className="rounded bg-navy-50 px-1.5 py-0.5 font-mono text-xs text-navy-800">
+              {id || "(없음)"}
+            </span>
+          </p>
+          <p className="mt-3 text-xs text-navy-500">
+            의뢰가 다른 브라우저에서 등록되었거나, 사용자가 의뢰를 삭제하셨을 수
+            있습니다. 본 게시판은 사용자 본인 브라우저의 활동 기록을 함께 노출합니다.
+          </p>
+          <div className="mt-6 flex flex-col items-center justify-center gap-2 sm:flex-row">
+            <Link
+              href="/board"
+              className="rounded-lg bg-navy-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-navy-800"
+            >
+              의뢰 게시판으로
+            </Link>
+            <Link
+              href="/my"
+              className="rounded-lg border border-navy-200 px-5 py-2.5 text-sm font-semibold text-navy-800 hover:border-navy-400"
+            >
+              내 활동으로
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const request = storedRequest;
