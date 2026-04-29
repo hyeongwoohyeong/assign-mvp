@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import SectionTitle from "@/components/SectionTitle";
 import {
   closeMyRequest,
+  deleteMyRequest,
   listMyContactRequests,
   listMyProposals,
   listMyRequests,
@@ -246,6 +247,24 @@ function RequestsTab({
                   의뢰 마감
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => {
+                  if (
+                    typeof window !== "undefined" &&
+                    !window.confirm(
+                      `"${r.title}" 의뢰를 삭제할까요? 이 작업은 되돌릴 수 없습니다.`,
+                    )
+                  ) {
+                    return;
+                  }
+                  deleteMyRequest(r.id);
+                  onChanged("의뢰를 삭제했습니다.");
+                }}
+                className="rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 hover:border-rose-400 hover:bg-rose-50"
+              >
+                의뢰 삭제
+              </button>
               <p className="ml-auto self-center text-[11px] text-navy-500">
                 내가 받은 제안: {myProposals.length}건
               </p>

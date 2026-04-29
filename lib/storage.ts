@@ -156,6 +156,15 @@ export function closeMyRequest(id: string) {
   });
 }
 
+// 의뢰를 영구 삭제. 본인이 잘못 등록했거나 테스트로 등록한 의뢰를 정리할 때 사용.
+// 연결된 제안도 함께 정리한다 (해당 requestId 의 stored proposals 모두 제거).
+export function deleteMyRequest(id: string) {
+  const list = listMyRequests().filter((r) => r.id !== id);
+  safeWrite(KEYS.myRequests, list);
+  const proposals = listMyProposals().filter((p) => p.requestId !== id);
+  safeWrite(KEYS.myProposals, proposals);
+}
+
 // ---------------------------------------------------------------------
 // 내 제안 (Expert 측 — 본인이 전문가로서 의뢰에 보낸 제안)
 // ---------------------------------------------------------------------
