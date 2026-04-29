@@ -46,6 +46,50 @@ export const SERVICE_CATEGORY_DESCRIPTIONS: Record<ServiceCategory, string> = {
 // 연락처 공유는 "연락 요청 → 전문가 수락" 흐름을 통해서만 이뤄진다.
 export const MOCK_EXPERTS: Expert[] = [
   {
+    id: "EXP-JGQ0KJ",
+    name: "최근호",
+    firm: "다산회계법인",
+    specialties: [
+      "회계감사",
+      "회계자문",
+      "재무실사",
+      "기업가치평가",
+      "경영/재무 컨설팅",
+      "M&A 자문",
+    ],
+    qualifications: ["KICPA"],
+    experienceSummary:
+      "안진회계법인 감사본부 18년 / 다산회계법인 DCF·공정가치평가 전문",
+    serviceCategories: [
+      "회계감사",
+      "회계자문",
+      "재무실사",
+      "기업가치평가",
+      "경영/재무 컨설팅",
+      "M&A 자문",
+    ],
+    location: "전국 가능",
+    verified: false,
+    experienceBullets: [
+      "제조업·도소매업·비은행금융업 외부감사 다수 수행",
+      "내부회계관리제도 구축 및 평가 (제조업, 발전업, 비은행금융업)",
+      "DCF 기업가치평가",
+      "M&A 및 Workout 재무실사",
+      "금융상품 공정가치평가",
+      "해외 자회사 인수 시 재무실사 및 PMI",
+      "ERP 도입 시 PI(Process Innovation)",
+    ],
+    preferredServices: ["기업가치평가", "회계자문", "재무실사"],
+    feeRange: "1,000만원~3,000만원",
+    intro: [
+      "안진회계법인 감사본부에서 18년간 근무",
+      "다산회계법인에서 DCF 및 금융상품 공정가치평가 전문가로 수행",
+      "K-IFRS 질의회신연석회의 외부위원 (2024.3 ~ 2026.2)",
+      "한국공인회계사회 회계연구위원회 위원 (2022.9 ~ 2026.8)",
+      "K-IFRS 실무사례와 해설 공동저자 (2023)",
+    ],
+  },
+  {
     id: "EXP-GV6HMH",
     name: "이민주",
     firm: "세연회계법인",
@@ -77,6 +121,20 @@ export const MOCK_RECENT_REQUESTS: ClientRequest[] = [];
 // 운영 대시보드 — "최근 전문가 등록" 표. 실제 가입자만 노출.
 export const MOCK_RECENT_EXPERT_REGISTRATIONS: ExpertRegistration[] = [
   {
+    id: "EXP-JGQ0KJ",
+    name: "최근호",
+    firm: "다산회계법인",
+    specialties: [
+      "회계감사",
+      "회계자문",
+      "재무실사",
+      "기업가치평가",
+      "경영/재무 컨설팅",
+      "M&A 자문",
+    ],
+    status: "승인",
+  },
+  {
     id: "EXP-GV6HMH",
     name: "이민주",
     firm: "세연회계법인",
@@ -93,7 +151,7 @@ export const MOCK_RECENT_EXPERT_REGISTRATIONS: ExpertRegistration[] = [
 
 export const ADMIN_SUMMARY = {
   newRequests: 0,
-  registeredExperts: 1,
+  registeredExperts: 2,
   matchingInReview: 0,
   proposalsSent: 0,
 };

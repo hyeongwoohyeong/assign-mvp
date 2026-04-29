@@ -30,6 +30,13 @@ export interface Expert {
   serviceCategories: ServiceCategory[];
   location: string;
   verified: boolean;
+  // 풍부한 프로필 정보 — "프로필 보기" 모달에서만 노출되며, 디렉토리 카드 자체의
+  // 레이아웃은 그대로 유지된다. 모든 필드는 선택값이므로 기존 카드와 호환된다.
+  // COMPLIANCE: 본 타입에는 이메일/전화 등 연락처를 절대 포함하지 않는다.
+  experienceBullets?: string[];
+  preferredServices?: ServiceCategory[];
+  feeRange?: BudgetRange;
+  intro?: string[]; // 줄바꿈 단위로 분할된 자기소개. 모달에서 한 줄씩 렌더링.
 }
 
 // COMPLIANCE NOTE:

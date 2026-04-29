@@ -23,6 +23,7 @@ interface ExpertCardProps {
 
 export default function ExpertCard({ expert }: ExpertCardProps) {
   const [contactOpen, setContactOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,11 +85,23 @@ export default function ExpertCard({ expert }: ExpertCardProps) {
         </button>
         <button
           type="button"
+          onClick={() => setProfileOpen(true)}
           className="w-full rounded-lg border border-navy-200 bg-white px-4 py-2.5 text-sm font-semibold text-navy-900 transition hover:border-navy-900 hover:bg-navy-900 hover:text-white"
         >
           프로필 보기
         </button>
       </div>
+
+      {profileOpen && (
+        <ExpertProfileModal
+          expert={expert}
+          onClose={() => setProfileOpen(false)}
+          onRequestContact={() => {
+            setProfileOpen(false);
+            setContactOpen(true);
+          }}
+        />
+      )}
 
       {contactOpen && (
         <ContactRequestModal
@@ -440,6 +453,187 @@ function ContactRequestModal({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// 전문가 프로필 모달
+// =====================================================================
+//
+// COMPLIANCE: 본 모달에서도 전문가의 이메일/전화 등 연락처는 절대 노출하지
+// 않는다. 연락처는 "연락 요청 → 수락" 흐름을 통해서만 공유된다.
+function ExpertProfileModal({
+  expert,
+  onClose,
+  onRequestContact,
+}: {
+  expert: Expert;
+  onClose: () => void;
+  onRequestContact: () => void;
+}) {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-navy-900/50 p-4 sm:items-center"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="my-6 w-full max-w-2xl rounded-2xl border border-navy-100 bg-white shadow-card"
+        role="dialog"
+        aria-modal="true"
+      >
+        {/* 헤더 */}
+        <div className="flex items-start justify-between gap-3 border-b border-navy-100 bg-[#f7f9fc] px-6 py-5 sm:px-8">
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wide text-navy-500">
+              전문가 프로필
+            </p>
+            <div className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              <h2 className="text-2xl font-bold text-navy-900">
+                {expert.name}
+              </h2>
+              <span className="text-sm font-medium text-navy-600">
+                {expert.firm}
+              </span>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-navy-500">
+              <span>등록번호 {expert.id}</span>
+              <span aria-hidden="true">·</span>
+              <span>{expert.location}</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 rounded-md px-2 py-1 text-sm text-navy-600 hover:bg-white"
+            aria-label="닫기"
+          >
+            닫기
+          </button>
+        </div>
+
+        <div className="space-y-6 px-6 py-6 sm:px-8">
+          {/* 전문분야 — 강조된 태그 */}
+          <section>
+            <SectionLabel>전문분야</SectionLabel>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {expert.specialties.map((s) => (
+                <span
+                  key={s}
+                  className="rounded-md bg-navy-900 px-2.5 py-1 text-xs font-semibold text-white"
+                >
+                  {s}
+                </span>
+              ))}
+            </div>
+          </section>
+
+          {/* 자격 + 평균 보수 + 선호 용역 — 키-값 그리드 */}
+          <section className="grid gap-x-6 gap-y-4 rounded-xl border border-navy-100 bg-[#fafbfd] p-5 sm:grid-cols-2">
+            <KV label="보유 자격" value={expert.qualifications.join(", ")} />
+            {expert.feeRange && (
+              <KV label="평균 보수 범위" value={expert.feeRange} />
+            )}
+            {expert.preferredServices && expert.preferredServices.length > 0 && (
+              <KV
+                label="선호 용역 유형"
+                value={expert.preferredServices.join(", ")}
+              />
+            )}
+            <KV label="담당 가능 지역" value={expert.location} />
+          </section>
+
+          {/* 주요 수행 경험 — bullet */}
+          <section>
+            <SectionLabel>주요 수행 경험</SectionLabel>
+            {expert.experienceBullets && expert.experienceBullets.length > 0 ? (
+              <ul className="mt-3 space-y-2 text-sm leading-relaxed text-navy-800">
+                {expert.experienceBullets.map((b, i) => (
+                  <li key={i} className="flex gap-2.5">
+                    <span
+                      aria-hidden="true"
+                      className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-navy-900"
+                    />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-2 text-sm text-navy-700">
+                {expert.experienceSummary}
+              </p>
+            )}
+          </section>
+
+          {/* 프로필 소개 — intro 줄별 렌더 */}
+          {expert.intro && expert.intro.length > 0 && (
+            <section>
+              <SectionLabel>프로필 소개</SectionLabel>
+              <ul className="mt-3 space-y-1.5 text-sm leading-relaxed text-navy-700">
+                {expert.intro.map((line, i) => (
+                  <li key={i}>{line}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* 컴플라이언스 안내 */}
+          <div className="rounded-lg border border-navy-100 bg-[#f7f9fc] p-4 text-xs leading-relaxed text-navy-600">
+            <strong className="font-semibold text-navy-900">
+              연락처 안내.
+            </strong>{" "}
+            전문가의 이메일·전화번호는 "연락 요청"을 보낸 뒤 전문가가 수락한 경우에만
+            양측에 공유됩니다. 본 페이지에서는 연락처를 노출하지 않습니다.
+          </div>
+        </div>
+
+        {/* 액션 푸터 */}
+        <div className="flex flex-col-reverse gap-2 border-t border-navy-100 px-6 py-4 sm:flex-row sm:justify-end sm:px-8">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg border border-navy-200 bg-white px-5 py-2.5 text-sm font-semibold text-navy-800 hover:border-navy-400"
+          >
+            닫기
+          </button>
+          <button
+            type="button"
+            onClick={onRequestContact}
+            className="rounded-lg bg-navy-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-navy-800"
+          >
+            연락 요청 보내기 →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-xs font-semibold uppercase tracking-wide text-navy-500">
+      {children}
+    </p>
+  );
+}
+
+function KV({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-500">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-medium text-navy-900">{value}</p>
     </div>
   );
 }
