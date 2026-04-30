@@ -11,11 +11,13 @@ const NAV_LINKS = [
   { href: "/#faq", label: "FAQ" },
 ];
 
+// COMPLIANCE/SECURITY: /admin 은 운영자 전용 페이지이므로 공개 네비게이션에
+// 노출하지 않는다. 운영자는 URL 직접 입력으로 접근하며, middleware.ts 가
+// HTTP Basic Auth 로 인증을 강제한다.
 const SUB_LINKS = [
   { href: "/board", label: "의뢰 게시판" },
   { href: "/experts", label: "전문가 디렉터리" },
   { href: "/my", label: "내 활동" },
-  { href: "/admin", label: "운영 대시보드" },
 ];
 
 export default function Header() {
