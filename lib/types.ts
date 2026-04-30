@@ -35,7 +35,9 @@ export interface Expert {
   // COMPLIANCE: 본 타입에는 이메일/전화 등 연락처를 절대 포함하지 않는다.
   experienceBullets?: string[];
   preferredServices?: ServiceCategory[];
-  feeRange?: BudgetRange;
+  // 전문가 평균 보수 범위. BudgetRange 외에 "협의" 도 허용한다 — 일부 전문가는
+  // 의뢰별 협의를 선호하므로, 단일 범위로 강제하지 않는다.
+  feeRange?: BudgetRange | "협의";
   intro?: string[]; // 줄바꿈 단위로 분할된 자기소개. 모달에서 한 줄씩 렌더링.
 }
 

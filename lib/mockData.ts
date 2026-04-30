@@ -44,7 +44,112 @@ export const SERVICE_CATEGORY_DESCRIPTIONS: Record<ServiceCategory, string> = {
 // 이메일·전화번호 등 연락처는 본 mock 에 절대 저장하지 않으며,
 // 등록 폼에서 받은 후 운영자 알림 메일로만 전달된다.
 // 연락처 공유는 "연락 요청 → 전문가 수락" 흐름을 통해서만 이뤄진다.
+//
+// 또한 일부 전문가는 본명 비공개를 요청하여 등록 신청한다. 본명은 운영자가
+// 별도로 보관하며, 본 mock 에는 공개 노출용 표시명("비공개")만 저장한다.
 export const MOCK_EXPERTS: Expert[] = [
+  {
+    id: "EXP-L3Z806",
+    name: "윤성원",
+    firm: "인성회계법인",
+    specialties: [
+      "회계감사",
+      "세무기장",
+      "세무신고",
+      "회계자문",
+      "기업가치평가",
+      "재무실사",
+      "경영/재무 컨설팅",
+      "M&A 자문",
+    ],
+    qualifications: ["KICPA"],
+    experienceSummary:
+      "삼일회계법인 출신 10년차 / 회계·세무·평가 전 분야 폭넓게 수행",
+    serviceCategories: [
+      "회계감사",
+      "세무기장",
+      "세무신고",
+      "회계자문",
+      "기업가치평가",
+      "재무실사",
+      "경영/재무 컨설팅",
+      "M&A 자문",
+    ],
+    location: "전국 가능",
+    verified: false,
+    experienceBullets: [
+      "전 삼일회계법인 회계감사 본부",
+      "전 삼일회계법인 조세자문 본부",
+      "국내 다수 대·중소 회사 세무조사 대응",
+      "국내 다수 회사 외부감사",
+      "공시목적 외부평가",
+      "재무보고목적 외부평가 (DCF, PPA, 옵션평가)",
+    ],
+    preferredServices: [
+      "세무기장",
+      "회계감사",
+      "회계자문",
+      "기업가치평가",
+    ],
+    feeRange: "협의",
+    intro: [
+      "삼일회계법인 출신 10년차 회계사입니다.",
+      "회계, 세무, 평가 분야를 깊이 수행해왔으며, 대표님과 회계팀에서 필요한 업무를 폭넓게 지원 가능합니다.",
+      "다수 상장사 및 비상장사를 고객사로 업무를 수행하고 있으며, 다년간 고객 이탈 없이 높은 재계약률을 유지하고 있습니다.",
+      "업무 문의 시 친절히 상담드립니다.",
+    ],
+  },
+  {
+    // 본 전문가는 본명 비공개를 요청하여 등록 신청했다.
+    // 공개 노출용 표시명은 "비공개" 이며, 실명·이메일·전화번호는
+    // 본 mock 어디에도 저장하지 않는다 (운영자 별도 보관).
+    id: "EXP-L31XSX",
+    name: "비공개",
+    firm: "안경회계법인",
+    specialties: [
+      "회계감사",
+      "기업가치평가",
+      "재무실사",
+      "M&A 자문",
+      "세무신고",
+      "회계자문",
+      "경영/재무 컨설팅",
+    ],
+    qualifications: ["KICPA"],
+    experienceSummary:
+      "빅4 회계법인 출신 / 부산 안경회계법인 / 회계감사·가치평가·세무 중심",
+    serviceCategories: [
+      "회계감사",
+      "기업가치평가",
+      "재무실사",
+      "M&A 자문",
+      "세무신고",
+      "회계자문",
+      "경영/재무 컨설팅",
+    ],
+    location: "부산, 울산, 경남",
+    verified: false,
+    experienceBullets: [
+      "상장사 및 비상장사 회계감사 다수",
+      "전환사채 및 RCPS 등 복합금융상품 평가",
+      "DCF 기업가치평가",
+      "PPA 평가",
+      "세무조정",
+      "상증세법상 주식평가",
+      "상속·증여세 자문",
+      "지방세 신고대리",
+    ],
+    preferredServices: [
+      "회계감사",
+      "기업가치평가",
+      "세무신고",
+    ],
+    feeRange: "협의",
+    intro: [
+      "빅4 회계법인 출신 회계사로, 현재 부산 소재 안경회계법인에서 회계업무를 수행하고 있습니다.",
+      "회계감사, 가치평가, 세무업무를 중심으로 다양한 기업 고객을 지원하고 있습니다.",
+    ],
+  },
   {
     id: "EXP-JGQ0KJ",
     name: "최근호",
@@ -121,6 +226,37 @@ export const MOCK_RECENT_REQUESTS: ClientRequest[] = [];
 // 운영 대시보드 — "최근 전문가 등록" 표. 실제 가입자만 노출.
 export const MOCK_RECENT_EXPERT_REGISTRATIONS: ExpertRegistration[] = [
   {
+    id: "EXP-L3Z806",
+    name: "윤성원",
+    firm: "인성회계법인",
+    specialties: [
+      "회계감사",
+      "세무기장",
+      "세무신고",
+      "회계자문",
+      "기업가치평가",
+      "재무실사",
+      "경영/재무 컨설팅",
+      "M&A 자문",
+    ],
+    status: "승인",
+  },
+  {
+    id: "EXP-L31XSX",
+    name: "비공개",
+    firm: "안경회계법인",
+    specialties: [
+      "회계감사",
+      "기업가치평가",
+      "재무실사",
+      "M&A 자문",
+      "세무신고",
+      "회계자문",
+      "경영/재무 컨설팅",
+    ],
+    status: "승인",
+  },
+  {
     id: "EXP-JGQ0KJ",
     name: "최근호",
     firm: "다산회계법인",
@@ -151,7 +287,7 @@ export const MOCK_RECENT_EXPERT_REGISTRATIONS: ExpertRegistration[] = [
 
 export const ADMIN_SUMMARY = {
   newRequests: 0,
-  registeredExperts: 2,
+  registeredExperts: 4,
   matchingInReview: 0,
   proposalsSent: 0,
 };
