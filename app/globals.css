@@ -25,6 +25,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/*
+  한국어 어절(단어 덩어리) 중간에서 줄바꿈되는 문제 방지.
+  헤딩과 굵은 텍스트는 공백 단위에서만 줄바꿈되도록 한다.
+  (예: "기업이 필요한 전문서비스를 등록하면" 이 "등록"/"하면" 으로 끊기지 않음)
+*/
+h1,
+h2,
+h3,
+h4,
+.font-bold,
+.font-semibold {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 html {
   scroll-behavior: smooth;
 }

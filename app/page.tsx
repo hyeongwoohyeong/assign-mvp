@@ -150,7 +150,7 @@ export default function HomePage() {
               HEADLINE — 자동 줄바꿈에 의존하지 않고 의미 단위로 명시적 줄바꿈.
               각 줄이 시각적으로 균형잡히도록 block 단위로 구성한다.
             */}
-            <h1 className="mt-6 text-4xl font-bold leading-[1.2] tracking-tight text-navy-900 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-6 break-keep text-4xl font-bold leading-[1.15] tracking-tight text-navy-900 sm:text-5xl lg:text-6xl">
               <span className="block">기업이 필요한 전문서비스를 등록하면</span>
               <span className="block">전문가의 제안을 받고</span>
               <span className="block">직접 선택할 수 있습니다</span>
