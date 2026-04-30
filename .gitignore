@@ -7,3 +7,6 @@ dist
 *.log
 .vscode
 .idea
+
+# 운영자 전용 DB — 본명/이메일/전화번호 등 PII 포함되므로 절대 커밋 금지.
+admin/
